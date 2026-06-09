@@ -1,0 +1,91 @@
+name: Post-Merge Checks
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  check-builds:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        variant: [alpine, ubuntu]
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Prepare Docker image
+        uses: docker/build-push-action@v7
+        with:
+          context: ci/
+          file: ci/Dockerfile.${{ matrix.variant }}
+          target: full
+          load: true
+          tags: tyghbn:post-merge-${{ matrix.variant }}-${{ github.sha }}
+          cache-from: type=gha,scope=post-merge
+          cache-to: type=gha,mode=max,scope=post-merge
+
+      - name: Test building
+        run: |
+          docker run --rm \
+            -v "${{ github.workspace }}:/workspace" \
+            --workdir /workspace \
+            --entrypoint /bin/sh \
+            tyghbn:post-merge-${{ matrix.variant }}-${{ github.sha }} \
+            -c "just check-builds"
+
+  tag-stable:
+    needs: check-builds
+    if: success()
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Update stable tag to latest passing commit
+        run: |
+          git tag --force stable
+          git push --force origin stable
+
+  report-failure:
+    needs: check-builds
+    if: failure()
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    steps:
+      - name: Create alert issue
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          PR_URL=$(gh pr list \
+            --repo "${{ github.repository }}" \
+            --state merged \
+            --limit 1 \
+            --json url \
+            --template '{{range .}}{{.url}}{{end}}')
+
+          ISSUE_BODY="**Post-Merge Checks** [failed]($GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID).
+
+          Commit: $GITHUB_SHA
+          Branch: ${GITHUB_REF#refs/heads/}"
+
+          if [ -n "$PR_URL" ]; then
+            ISSUE_BODY="$ISSUE_BODY
+          Associated PR: $PR_URL"
+          fi
+
+          ISSUE_BODY="$ISSUE_BODY
+
+          Check the [workflow run]($GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID) for details."
+
+          gh issue create \
+            --repo "${{ github.repository }}" \
+            --title "Post-merge checks failed on ${GITHUB_SHA:0:7}" \
+            --body "$ISSUE_BODY"
