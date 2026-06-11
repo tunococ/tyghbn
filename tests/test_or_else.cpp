@@ -1,9 +1,9 @@
 #include <doctest/doctest.h>
 
 #if TYGHBN_USE_MODULES
-import tyghbn.or_else;
+import tyghbn;
 #else
-#include <tyghbn/or_else.hpp>
+#include <tyghbn/tyghbn.hpp>
 #endif
 
 using namespace tyghbn;

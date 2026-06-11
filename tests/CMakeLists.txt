@@ -1,3 +1,4 @@
+### TEMPLATE_BLOCK: Test code
 target_sources(test_tyghbn
   PRIVATE
     test_main.cpp
@@ -7,6 +8,6 @@ target_sources(test_tyghbn
 
 target_link_libraries(test_tyghbn
   PRIVATE
-    or_else
-    add_one
+    tyghbn
 )
+### TEMPLATE_BLOCK_END: Test code

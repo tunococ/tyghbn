@@ -3,9 +3,9 @@
 #include <doctest/doctest.h>
 
 #if TYGHBN_USE_MODULES
-import tyghbn.add_one;
+import tyghbn;
 #else
-#include <tyghbn/add_one.hpp>
+#include <tyghbn/tyghbn.hpp>
 #endif
 
 using namespace tyghbn;

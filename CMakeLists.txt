@@ -41,15 +41,15 @@ if(PROJECT_IS_TOP_LEVEL)
     set(CDB_PATH "${CMAKE_CURRENT_BINARY_DIR}")
   endif()
 
-  # Create an absolute invariant build target
-  add_custom_target(docs
-    COMMAND hdoc -p "${CDB_PATH}" --verbose
-    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-    COMMENT "Generating clean library documentation..."
-  )
+  message("compile_commands.json path: ${CDB_PATH}")
 endif()
 
-# Library without cpp files.
+### TEMPLATE_BLOCK: Library with no cpp files
+#
+# To provide a consist interface for module and non-module versions, start with
+# a base library which is a non-module version.
+#
+# Note that the type of the library target must be INTERFACE here.
 add_library(or_else-legacy INTERFACE)
 target_sources(or_else-legacy
   INTERFACE
@@ -58,11 +58,17 @@ target_sources(or_else-legacy
       BASE_DIRS include
 )
 
-# Header-only library target: or_else
-# The header-style library has to be declared as an INTERFACE library,
-# while the module-style library can be unspecified (STATIC or SHARED).
-
-if(TYGHBN_USE_MODULES)
+if(NOT TYGHBN_USE_MODULES)
+  # For the non-C++-module version, we simply define a passthrough library
+  # because or_else-legacy is already a valid library.
+  add_library(or_else INTERFACE)
+  target_link_libraries(or_else
+    INTERFACE
+      or_else-legacy
+  )
+else()
+  # For the C++-module version, we add the module interface files on top of
+  # the base library.
   add_library(or_else)
   target_compile_features(or_else PUBLIC cxx_std_20)
   target_link_libraries(or_else
@@ -74,15 +80,11 @@ if(TYGHBN_USE_MODULES)
       FILE_SET CXX_MODULES
         FILES modules/or_else.cppm
   )
-else()
-  add_library(or_else INTERFACE)
-  target_link_libraries(or_else
-    INTERFACE
-      or_else-legacy
-  )
 endif()
+### TEMPLATE_BLOCK_END: Library with no cpp files
 
-# Template for a library with at least one cpp file.
+
+### TEMPLATE_BLOCK: Library with cpp files
 #
 # To provide a consist interface for module and non-module versions, start with
 # a base library which is a non-module version.
@@ -96,9 +98,17 @@ target_sources(add_one-legacy
     src/add_one.cpp
 )
 
-# To expose the library as a C++ module, add cppm files that export symbols
-# from header files.
-if(TYGHBN_USE_MODULES)
+if(NOT TYGHBN_USE_MODULES)
+  # For the non-C++-module version, we simply define a passthrough library
+  # because add_one-legacy is already a valid library.
+  add_library(add_one INTERFACE)
+  target_link_libraries(add_one
+    INTERFACE
+      add_one-legacy
+  )
+else()
+  # For the C++-module version, we add the module interface files on top of
+  # the base library.
   add_library(add_one)
   target_compile_features(add_one PUBLIC cxx_std_20)
   target_link_libraries(add_one
@@ -110,55 +120,111 @@ if(TYGHBN_USE_MODULES)
       FILE_SET CXX_MODULES
         FILES modules/add_one.cppm
   )
-else()
-  add_library(add_one INTERFACE)
-  target_link_libraries(add_one
-    INTERFACE
-      add_one-legacy
-  )
 endif()
+### TEMPLATE_BLOCK_END: Library with cpp files
+
+
+### TEMPLATE_BLOCK: Umbrella library
+#
+# "All" target that includes all libraries above.
+add_library(tyghbn-legacy INTERFACE)
+target_sources(tyghbn-legacy
+  INTERFACE
+    FILE_SET HEADERS
+      FILES include/tyghbn/tyghbn.hpp
+      BASE_DIRS include
+)
+# Put all the libraries to include.
+target_link_libraries(tyghbn-legacy
+  INTERFACE
+    or_else
+    add_one
+)
+
+if(NOT TYGHBN_USE_MODULES)
+  # For the non-C++-module version, we simply define a passthrough library
+  # because tyghbn-legacy is already a valid library.
+  add_library(tyghbn INTERFACE)
+  target_link_libraries(tyghbn
+    INTERFACE
+      tyghbn-legacy
+  )
+else()
+  # For the C++-module version, we add the module interface file that
+  # re-exports all of its submodules.
+  add_library(tyghbn)
+  target_compile_features(tyghbn PUBLIC cxx_std_20)
+  target_link_libraries(tyghbn
+    PUBLIC
+      tyghbn-legacy
+  )
+  # Add an extra cppm file that provides a better way to include submodules via
+  # `export import`.
+  target_sources(tyghbn
+    PUBLIC
+      FILE_SET CXX_MODULES
+        FILES modules/tyghbn.cppm
+  )
+  # Note that this umbrella module does not really need tyghbn.hpp if it is
+  # only used via `import` as tyghbn.cppm does not include tyghbn.hpp, but we
+  # include tyghbn.hpp (via linking with tyghbn-legacy) to make this library
+  # support both the header-style usage and the import-style usage.
+  # Additionally, it simplifies CMake code as tyghbn-legacy is itself a valid
+  # library for the non-C++-module case.
+endif()
+
 
 # Testing enabled only when the project is top-level and BUILD_TESTING is not
 # explicitly defined as OFF.
 if(PROJECT_IS_TOP_LEVEL AND NOT (DEFINED BUILD_TESTING AND NOT BUILD_TESTING))
+
+  ### TEMPLATE_BLOCK: Test library initialization
+  #
   # Find doctest ONLY via the configuration of this project.
   find_package(doctest CONFIG QUIET)
 
   if(NOT doctest_FOUND)
     message(WARNING "doctest not found - tests will not be built")
-    return()
-  endif()
+  else()
+    # Include CMake scripts from doctest 
+    list(APPEND CMAKE_MODULE_PATH ${doctest_CMAKE_MODULE_PATH})
+    include(doctest)
+    ### TEMPLATE_BLOCK_END: Test library initialization
 
-  # Enable testing
-  enable_testing()
+    # Enable testing
+    enable_testing()
 
-  list(APPEND CMAKE_MODULE_PATH ${doctest_CMAKE_MODULE_PATH})
-  include(doctest)
+    # Create a test executable target
+    add_executable(test_tyghbn)
 
-  add_executable(test_tyghbn)
+    # Pass the TYGHBN_USE_MODULES flag to the test code
+    if(TYGHBN_USE_MODULES)
+      target_compile_definitions(test_tyghbn
+        PRIVATE
+          TYGHBN_USE_MODULES
+      )
+    endif()
 
-  # Pass the TYGHBN_USE_MODULES flag to the test code
-  if(TYGHBN_USE_MODULES)
-    target_compile_definitions(test_tyghbn
+    # Add test source files
+    add_subdirectory(tests)
+
+    ### TEMPLATE_BLOCK: Test library finalization
+    #
+    # Link the test executable to the test library
+    target_link_libraries(test_tyghbn
       PRIVATE
-        TYGHBN_USE_MODULES
+        doctest::doctest
     )
-  endif()
 
-  add_subdirectory(tests)
+    # Create test targets
+    doctest_discover_tests(test_tyghbn)
+    ### TEMPLATE_BLOCK_END: Test library finalization
 
-  target_link_libraries(test_tyghbn
-    PRIVATE
-      doctest::doctest
-  )
 
-  doctest_discover_tests(test_tyghbn)
-
-  option(TYGHBN_ENABLE_COVERAGE "Enable code coverage instrumentation" OFF)
-
-  if(TYGHBN_ENABLE_COVERAGE)
-    if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-      if(doctest_FOUND)
+    # Code coverage report generation
+    option(TYGHBN_ENABLE_COVERAGE "Enable code coverage instrumentation" OFF)
+    if(TYGHBN_ENABLE_COVERAGE)
+      if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
         target_compile_options(test_tyghbn PRIVATE --coverage -O0 -g)
         target_link_options(test_tyghbn PRIVATE --coverage)
 
@@ -202,11 +268,11 @@ if(PROJECT_IS_TOP_LEVEL AND NOT (DEFINED BUILD_TESTING AND NOT BUILD_TESTING))
         else()
           message(WARNING "gcovr not found — coverage target will not be created")
         endif()
+      elseif(MSVC)
+        message(WARNING "Code coverage is not supported with MSVC")
+      else()
+        message(WARNING "Code coverage is not supported with ${CMAKE_CXX_COMPILER_ID}")
       endif()
-    elseif(MSVC)
-      message(WARNING "Code coverage is not supported with MSVC")
-    else()
-      message(WARNING "Code coverage is not supported with ${CMAKE_CXX_COMPILER_ID}")
     endif()
   endif()
 
@@ -217,7 +283,7 @@ endif()
 
 # Installation rules
 if(TYGHBN_USE_MODULES)
-  install(TARGETS or_else add_one
+  install(TARGETS or_else add_one tyghbn
     LIBRARY DESTINATION lib
     ARCHIVE DESTINATION lib
     RUNTIME DESTINATION bin
@@ -227,7 +293,7 @@ if(TYGHBN_USE_MODULES)
     DESTINATION include
   )
 else()
-  install(TARGETS or_else add_one
+  install(TARGETS or_else add_one tyghbn
     LIBRARY DESTINATION lib
     ARCHIVE DESTINATION lib
     RUNTIME DESTINATION bin
