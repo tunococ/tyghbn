@@ -1,5 +1,5 @@
 /**
- * @mainpage TYGHBN
+ * @mainpage Tyghbn
  * 
  * @brief Entry point: @ref tyghbn.hpp
  * 
@@ -49,8 +49,7 @@
  * 
  * @brief [module tyghbn](module__tyghbn.html)
  * 
- * This is the entry point for the library.
- * It exposes all public submodules.
+ * This is an umbrella header file that includes all submodules.
  */
 
 #pragma once

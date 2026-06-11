@@ -5,7 +5,7 @@ from conan.tools.cmake import cmake_layout, CMakeDeps, CMakeToolchain, CMake
 PACKAGE_NAME = "tyghbn"
 EXPORT_LIBS = ["or_else", "add_one"]
 
-class TYGHBN(ConanFile):
+class Tyghbn(ConanFile):
     name = PACKAGE_NAME
 
     # Metadata
@@ -27,10 +27,15 @@ class TYGHBN(ConanFile):
         "use_modules": True,
     }
 
+    def requirements(self):
+        # # Put dependencies here. For example:
+        # self.requires("zlib/[>=1.3.1 <2.0.0]")
+        pass
+
     def build_requirements(self):
         skip_tests = self.conf.get("tools.build:skip_test", default=False, check_type=bool)
         if not skip_tests:
-            self.test_requires("doctest/[>=2.5.2]")
+            self.test_requires("doctest/[>=2.5.2 <3.0.0]")
 
     def validate(self):
         check_min_cppstd(self, "20")

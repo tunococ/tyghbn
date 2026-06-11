@@ -1,6 +1,6 @@
 # Remove build artifacts
 clean:
-    rm -rf build
+    rm -rf build CMakeUserPresets.json
 
 # Detect Conan profile
 detect:
@@ -8,24 +8,37 @@ detect:
 
 # Initialize single-config build for a given build type
 init build_type compiler='gcc' coverage='cov' modules='mod':
-    conan install . --build=missing -pr .pr/{{ compiler }}-{{ build_type }} \
+    conan install . --build=missing \
+        -pr .pr/{{ compiler }} \
+        -pr .pr/ninja \
+        -pr .pr/{{ build_type }} \
         -o '&:use_modules={{ if modules =~ 'mod' { 'True' } else { 'False' } }}'
     cmake --preset conan-{{ build_type }} \
         -DTYGHBN_ENABLE_COVERAGE={{ if coverage =~ 'cov' { 'ON' } else { 'OFF' } }}
 
-# Initialize single-config build for both build types
+# Initialize single-config build for all build types
 init-single compiler='gcc' coverage='cov' modules='mod':
     just init debug {{ compiler }} {{ coverage }} {{ modules }}
     just init release {{ compiler }} {{ coverage }} {{ modules }}
+    just init relwithdebinfo {{ compiler }} {{ coverage }} {{ modules }}
+    just init minsizerel {{ compiler }} {{ coverage }} {{ modules }}
 
-# Initialize multi-config build
-init-multi compiler='gcc' coverage='cov' modules='mod':
-    conan install . --build=missing -pr .pr/{{ compiler }}-multi-debug \
-        -o '&:use_modules={{ if modules =~ 'mod' { 'True' } else { 'False' } }}'
-    conan install . --build=missing -pr .pr/{{ compiler }}-multi-release \
+# Initialize multi-config build for a given build type
+initm build_type compiler='gcc' coverage='cov' modules='mod':
+    conan install . --build=missing \
+        -pr .pr/{{ compiler }} \
+        -pr .pr/ninja-multi \
+        -pr .pr/{{ build_type }} \
         -o '&:use_modules={{ if modules =~ 'mod' { 'True' } else { 'False' } }}'
     cmake --preset conan-default \
         -DTYGHBN_ENABLE_COVERAGE={{ if coverage =~ 'cov' { 'ON' } else { 'OFF' } }}
+
+# Initialize multi-config build for all build types
+init-multi compiler='gcc' coverage='cov' modules='mod':
+    just initm debug {{ compiler }} {{ coverage }} {{ modules }}
+    just initm release {{ compiler }} {{ coverage }} {{ modules }}
+    just initm relwithdebinfo {{ compiler }} {{ coverage }} {{ modules }}
+    just initm minsizerel {{ compiler }} {{ coverage }} {{ modules }}
 
 # Run `init debug`
 id: (init 'debug')
@@ -68,7 +81,19 @@ test build_type *args:
     ctest --preset conan-{{ build_type }} \
         --output-junit test-report.xml \
         -O build/{{ \
-            if lowercase(build_type) =~ 'rel' { 'Release' } else { 'Debug' } \
+            if lowercase(build_type) =~ 'rel' { \
+                if lowercase(build_type) =~ 'deb' { \
+                    'RelWithDebInfo' \
+                } else { \
+                    if lowercase(build_type) =~ 'min' { \
+                        'MinSizeRel' \
+                    } else { \
+                        'Release' \
+                    } \
+                }
+            } else {
+                'Debug'
+            } \
         }}/test-report.txt \
         --output-on-failure \
         {{ args }}
@@ -83,7 +108,19 @@ ta: td tr
 build-cov build_type *args:
     just build {{ build_type }} --target coverage {{ args }}
     cat build/{{ \
-            if lowercase(build_type) =~ 'rel' { 'Release' } else { 'Debug' } \
+            if lowercase(build_type) =~ 'rel' { \
+                if lowercase(build_type) =~ 'deb' { \
+                    'RelWithDebInfo' \
+                } else { \
+                    if lowercase(build_type) =~ 'min' { \
+                        'MinSizeRel' \
+                    } else { \
+                        'Release' \
+                    } \
+                }
+            } else {
+                'Debug'
+            } \
         }}/coverage_report/summary.txt
 
 bcd: (build-cov 'debug')
@@ -96,7 +133,19 @@ bca: bcd bcr
 show-cov build_type port='8070':
     python3 -m http.server --directory \
         build/{{ \
-            if lowercase(build_type) =~ 'rel' { 'Release' } else { 'Debug' } \
+            if lowercase(build_type) =~ 'rel' { \
+                if lowercase(build_type) =~ 'deb' { \
+                    'RelWithDebInfo' \
+                } else { \
+                    if lowercase(build_type) =~ 'min' { \
+                        'MinSizeRel' \
+                    } else { \
+                        'Release' \
+                    } \
+                }
+            } else {
+                'Debug'
+            } \
         }}/coverage_report {{ port }}
 
 scd: (show-cov 'debug')
@@ -129,28 +178,28 @@ clean-docker-images prefix='tyghbn-':
 # =======================================================
 
 # Clean --> Build
-clean-build build_type='debug' compiler='gcc' coverage='cov' modules='mod':
+fresh-build build_type='debug' compiler='gcc' coverage='cov' modules='mod':
     just clean
     just init {{ build_type }} {{ compiler }} {{ coverage }} {{ modules }}
     just build {{ build_type }}
 
 # Clean --> Test
-clean-test build_type='debug' compiler='gcc' coverage='cov' modules='mod':
-    just clean-build {{ build_type }} {{ compiler }} {{ coverage }} \
+fresh-test build_type='debug' compiler='gcc' coverage='cov' modules='mod':
+    just fresh-build {{ build_type }} {{ compiler }} {{ coverage }} \
         {{ modules }}
     just test {{ build_type }}
 
 # Clean --> Coverage report
-clean-cov build_type='debug' compiler='gcc' modules='mod':
-    just clean-build {{ build_type }} {{ compiler }} cov {{ modules }}
+fresh-cov build_type='debug' compiler='gcc' modules='mod':
+    just fresh-build {{ build_type }} {{ compiler }} cov {{ modules }}
     just build-cov {{ build_type }}
 
 # Try building code for different configurations.
 check-builds:
-    just clean-build debug gcc cov mod
-    just clean-build debug gcc cov -
-    just clean-build debug clang cov mod
-    just clean-build debug clang cov -
+    just fresh-build debug gcc cov mod
+    just fresh-build debug gcc cov -
+    just fresh-build debug clang cov mod
+    just fresh-build debug clang cov -
 
 # Make a test report and a coverage report in debug.
 make-reports compiler='gcc' modules='mod':
