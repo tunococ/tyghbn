@@ -19,7 +19,7 @@ The development workflow has been tested with the following software installed:
 - [Conan](https://conan.io/) 2.28.1
 - [Gcovr](https://gcovr.com/) 8.6
 - [Docker](https://www.docker.com/) 29.5.3
-- [Just](https://just.systems/) 1.15.0
+- [Just](https://just.systems/) 1.51.0
 - [Doxygen](https://www.doxygen.nl/) 1.18.0
   - [Graphviz](https://graphviz.org/) 2.43.0
 
@@ -59,15 +59,23 @@ entities from header files in [`include`](include). `.cppm` files in
 [`modules`](modules) show how to make a C++ module interface from a header
 file.
 
-The file [`include/tyghbn/tyghbn.hpp`](include/tyghbn/tyghbn.hpp) is an
-umbrella interface that includes the other two header files: `add_one.hpp`
-and `or_else.hpp`.
+- [`modules/or_else.cppm`](modules/or_else.cppm) defines
+  `module tyghbn.or_else` that exposes names from
+  [`include/tyghbn/or_else.hpp`](include/tyghbn/or_else.hpp).
+- [`modules/add_one.cppm`](modules/add_one.cppm) defines
+  `module tyghbn.add_one` that exposes names from
+  [`include/tyghbn/add_one.hpp`](include/tyghbn/add_one.hpp).
+- [`modules/tyghbn.cppm`](modules/tyghbn.cppm) re-exports names from
+  `module tyghbn.or_else` and `module tyghbn.add_one` under a new module name:
+  `tyghbn`.
+
+
 In the [`modules`](modules) subdirectory, each of the `.cppm` files defines
 a C++ module from a header file of the same name.
-Note that [`tyghbn.cppm`](modules/tyghbn.cppm) does not include
-[`tyghbn.hpp`](include/tyghbn/tyghbn.hpp). Instead, it `imports` the other two
-`.cppm` files, similar to how [`tyghbn.hpp`](include/tyghbn/tyghbn.hpp)
-includes the other two `.hpp` files.
+However, [`modules/tyghbn.cppm`](modules/tyghbn.cppm), which is the umbrella
+C++ module interface, does not include
+[`tyghbn.hpp`](include/tyghbn/tyghbn.hpp). Instead, it `imports` the other 2 `.cppm` files, similar to how [`tyghbn.hpp`](include/tyghbn/tyghbn.hpp)
+includes the other 2 `.hpp` files.
 
 Test code lives in [`tests`](tests).
 The test library used here is [doctest](https://github.com/doctest/doctest).
@@ -90,7 +98,9 @@ This logic lives in `Tyghbn.generate` in [`conanfile.py`](conanfile.py).
 - `or_else`
 - `tyghbn`
 
-Each library target has one header file in [`include/tyghbn`](include/tyghbn)
+Each library
+[target](https://cmake.org/cmake/help/book/mastering-cmake/chapter/Key%20Concepts.html#targets)
+has one header file in [`include/tyghbn`](include/tyghbn)
 and one module file in [`modules`](modules) of the same name.
 The header file exposes a traditional interface, while the module file exposes
 a C++ module interface. Note that the directory structure of
@@ -184,14 +194,25 @@ things:
   - Doxygen has a dependency on [Graphviz](https://graphviz.org/), so you might
     need to install it too.
 
-### Development workflow
+### Development environment
 
-The development environment can be separated into the following stages:
-1. [Conan install](#1-conan-install-stage)
-2. [CMake configure](#2-cmake-configure-stage)
-3. [CMake build](#3-cmake-build-stage)
-4. [CTest](#4-ctest-stage)
+The development environment setup can be split into the following stages:
+1.  [Conan install](#1-conan-install-stage)
 
+    Download necessary dependencies and prepare them for CMake.
+
+2.  [CMake configure](#2-cmake-configure-stage)
+
+    Configure CMake: define
+    [CMake targets](https://cmake.org/cmake/help/book/mastering-cmake/chapter/Key%20Concepts.html#targets).
+
+3.  [CMake build](#3-cmake-build-stage)
+
+    Build code, i.e., CMake build targets.
+
+4.  [CTest](#4-ctest-stage)
+
+    Run tests.
 
 ### 1. Conan install stage
 
@@ -209,7 +230,7 @@ conan install . --build=missing [...args]
 ```
 
 `[...args]` specifies choices to be made at this stage, which are:
-- Build type: There are four build types that CMake recognizes:
+- Build type: There are 4 build types that CMake recognizes:
 
   - `Debug`
   - `Release`
@@ -232,8 +253,8 @@ conan install . --build=missing [...args]
   `conan install` command.
 - Build generator: Your default generator is dependent on your operating
   system, but you can override it.
-  - There are two types of *build generators*: single-config, and multi-config.
-    The difference between these two types does not affect the workflow except
+  - There are 2 types of *build generators*: single-config, and multi-config.
+    The difference between these 2 types does not affect the workflow except
     in [step 2](#2-cmake-configure-stage) when you call
     `cmake --preset conan-...`.
   - This repository provides the following Conan profiles to override your
@@ -266,7 +287,7 @@ conan install . --build=missing [...args]
   ```
   - Build type: `Release`
   - Build generator: Ninja multi-config
-  - Compiler: GCC
+  - Compiler: Clang
   - C++ module support: disabled
 
 - ```bash
@@ -290,14 +311,14 @@ multi-config generator matters.
 
 - Single-config:
   ```bash
-  cmake --preset conan-<buildtype>
+  cmake --preset conan-<build_type>
   ```
   This has to be executed for each build type that you have previously
   prepared with `conan install` in [step 1](#1-conan-install-stage),
-  and `buildtype` is a lowercase version of the build type.
+  and `build_type` is a lowercase version of the build type.
 
-  For example, if you want to use `Debug` and `MinSizeRel`, you will need to run
-  two commands
+  For example, if you want to use `Debug` and `MinSizeRel`, you will need to
+  run 2 commands:
   ```bash
   cmake --preset conan-debug
   cmake --preset conan-minsizerel
@@ -324,10 +345,10 @@ below for more information.
 To build the code, execute
 
 ```bash
-cmake --build --preset conan-<buildtype>
+cmake --build --preset conan-<build_type>
 ```
 
-for each `<buildtype>` that you have prepared earlier.
+for each `<build_type>` that you have prepared earlier.
 For example,
 
 ```bash
@@ -343,7 +364,7 @@ After you have successfully compiled the code with `cmake --build`, you can run
 tests by issuing a `ctest` command. The format is similar to `cmake --build`:
 
 ```bash
-ctest --preset conan-<buildtype> [...args]
+ctest --preset conan-<build_type> [...args]
 ```
 
 For example,
@@ -373,15 +394,21 @@ Remember that there is a difference at this stage between using a single-config
 generator and using a multi-config generator.
 
 **Example**
+
 - Single-config generator
+
   ```bash
-  cmake --preset conan-default -DTYGHBN_ENABLE_COVERAGE=ON
+  cmake --preset conan-debug -DTYGHBN_ENABLE_COVERAGE=ON
   ```
+
   prepares coverage instrumentation for the `Debug` build.
+
 - Multi-config generator
+
   ```bash
   cmake --preset conan-default -DTYGHBN_ENABLE_COVERAGE=ON
   ```
+  
   prepares coverage instrumentation for all build types.
 
 
@@ -466,7 +493,7 @@ Below is a summary of `just` commands available in [`justfile`](justfile):
   ```
 
   Initializes all build types for the given compiler and coverage option.
-  This simply calls `just init` 4 times, each for one build type.
+  This simply calls `just init` 4 times, once for each build type.
 
 - ```bash
   just init-multi [<compiler> [cov | -]]
@@ -554,7 +581,6 @@ Below is a summary of `just` commands available in [`justfile`](justfile):
 
 There are also `just` shortcuts that assume some default arguments:
 
-- `just cl` ⇒ `just clean`.
 - `just id` ⇒ `just init debug`.
 - `just ir` ⇒ `just init release`.
 - `just is` ⇒ `just init-single`.
@@ -634,8 +660,11 @@ the same command listed more than once, so
   just make-reports [<compiler> [<modules>]]
   ```
 
-  Cleans, builds, runs tests to generate a test report (in
-  [`build/Debug/report.xml`](build/Debug/report.xml), and a coverage report (in
+  Cleans, builds, runs tests to generate a test report and a coverage report.
+  The test results are stored in
+  [`build/Debug/test-report.xml`](build/Debug/test-report.xml) and
+  [`build/Debug/test-report.txt`](build/Debug/test-report.txt).
+  The coverage report is stored in
   [`build/Debug/coverage_report`](build/Debug/coverage_report).
 
 ### Docker
@@ -650,9 +679,9 @@ also provided for convenience.
   ```
 
   Builds an ephemeral Docker container from the image at the specified `stage`
-  in `Dockerfile.<variant>`, and run the command specified in `...args`.
-  Files in this repository will be copied into the container at directory
-  `/workspace` before the command is run.
+  in `Dockerfile.<variant>`, and runs the command specified in `...args`.
+  Files in this repository will be copied into the directory `/workspace`
+  inside the container before the command is run.
 
   - `variant`: A suffix of a Dockerfile in the [ci](ci) subdirectory.
     For example, putting `ubuntu` will use
@@ -661,7 +690,7 @@ also provided for convenience.
   - `stage`: A *stage* in the Dockerfile. This should be `gcc` or `full`.
     The `gcc` stage has a smaller image than `full` as it does not have
     Clang and related tools.
-    If `stage` is not specified, it defaults to `gcc`.
+    If `stage` is not specified, it defaults to `full`.
   - `args`: The command to run on the container. If not specified, it defaults
     to `sh`, which effectively brings up an interactive shell of the container.
     (The container will be destroyed after the shell session ends.)
@@ -673,8 +702,8 @@ also provided for convenience.
   Creates a Docker container with the specified `name` from the image at the
   specified `stage` in `Dockerfile.<variant>`, and run the command specified in
   `...args` in detached mode.
-  Files in this repository will be copied into the container at directory
-  `/workspace` before the command is run.
+  Files in this repository will be copied into the directory `/workspace`
+  inside the container before the command is run.
 
   - `variant`: A suffix of a Dockerfile in the [ci](ci) subdirectory.
     For example, putting `ubuntu` will use
@@ -683,7 +712,7 @@ also provided for convenience.
   - `stage`: A *stage* in the Dockerfile. This should be `gcc` or `full`.
     The `gcc` stage has a smaller image than `full` as it does not have
     Clang and related tools.
-    If `stage` is not specified, it defaults to `gcc`.
+    If `stage` is not specified, it defaults to `full`.
   - `name`: The name of the container. If not specified, it defaults to
     `<variant>-<stage>`. If a container with the specified name already exists,
     it will be stopped and deleted first.
@@ -737,3 +766,22 @@ Example:
 
   Same as `just clean-doc && just doc && just show-doc <port>`.
   The default `port` is 8060.
+
+
+## Github Actions
+
+- [`pull-request.yml`](.github/workflows/pull-request.yml)
+
+  - Triggers when a PR is opened, updated, or reopened.
+  - Runs `just make-reports` inside a Docker container based on the image in
+    [`Dockerfile.alpine`](ci/Dockerfile.alpine), then uploads test and
+    coverage reports as artifacts.
+
+- [`post-merge.yml`](.github/workflows/post-merge.yml)
+
+  - Triggers after a PR is merged into `main`.
+  - Runs `just check-builds` inside Docker containers based on the images in
+    [`Dockerfile.alpine`](ci/Dockerfile.alpine) and
+    [`Dockerfile.ubuntu`](ci/Dockerfile.ubuntu).
+    If the command fails for any of the containers, a new issue will be
+    created.
