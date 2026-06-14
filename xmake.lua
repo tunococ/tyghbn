@@ -2,6 +2,8 @@ set_project("tyghbn")
 set_version("1.0.0")
 set_xmakever("2.9.0")
 
+add_moduledirs("scripts/xmake")
+
 add_rules(
     "mode.debug",
     "mode.release",
@@ -73,25 +75,53 @@ target("tests")
 task("test-report")
     set_menu({
         usage = "xmake test-report",
-        description = "Run tests and generate a JUnit test report",
+        description =
+            "Run tests and generate test reports\n" ..
+            "- JUnit format: build/test_results.xml\n" ..
+            "- Text summary: build/test_results.txt"
+        ,
     })
     on_run(function ()
         import("core.project.config")
         config.load()
-        print("Running tests...")
 
-        local output_path = path.join(config.builddir(), "test_results.xml")
-        os.execv("xmake", {
-            "run",
-            "tests",
-            "--reporters=junit",
-            "--out=" .. output_path,
-        })
+        os.exec("xmake")
+
+        local output_dir = config.builddir()
+        local junit_results_path = path.join(output_dir, "test_results.xml")
+        os.rm(junit_results_path)
+        local test_status = os.execv(
+            "xmake",
+            {
+                "run",
+                "tests",
+                "--reporters=junit",
+                "--out=" .. junit_results_path,
+            },
+            {
+                try = true,
+                stdout = os.nuldev(),
+                stderr = os.nuldev(),
+            }
+        )
+
+        import("doctest_helpers")
+        local text_results_path = path.join(output_dir, "test_results.txt")
+        local stats = doctest_helpers.convert_junit_to_text(
+            junit_results_path,
+            text_results_path
+        )
+
+        print(io.readfile(text_results_path))
+
+        if stats.num_failures ~= 0 then
+            raise(stats.num_failures .. " test cases failed")
+        end
     end)
 
-task("coverage")
+task("coverage-report")
     set_menu({
-        usage = "xmake coverage",
+        usage = "xmake coverage-report",
         description = "Run tests and generate an HTML coverage report"
     })
     on_run(function ()
@@ -103,15 +133,13 @@ task("coverage")
         import("core.project.config")
         config.load()
         if config.get("mode") ~= "coverage" then
-            raise("Error: This task requires coverage mode. Please run:\n    xmake f -m coverage\n    xmake coverage")
+            raise("Error: This task requires coverage mode." ..
+                " Please run:\n" ..
+                "    xmake f -m coverage\n" ..
+                "    xmake coverage-report")
         end
 
-        print("Running tests...")
-        os.execv("xmake", {
-            "test",
-            "tests/*",
-            "--",
-        })
+        os.exec("xmake test")
 
         local output_dir = path.join(config.builddir(), "coverage")
         local output_file = path.join(output_dir, "index.html")
@@ -135,5 +163,38 @@ task("coverage")
             "--cobertura", path.join(output_dir, "cobertura.xml"),
             "--markdown", path.join(output_dir, "summary.md"),
         })
-        print("Done! Open %s to view.", output_file)
+        print("Coverage report generated. Open %s to view.", output_file)
+    end)
+
+task("clean-all")
+    set_menu({
+        usage = "xmake clean-all",
+        description = "Clean all build artifacts and configuration"
+    })
+    on_run(function()
+        os.exec("rm -rf build .xmake")
+    end)
+
+task("reports")
+    set_menu({
+        usage = "xmake reports",
+        description = "Run tests and generate test and coverage reports"
+    })
+    on_run(function()
+        -- Configure with coverage mode
+        os.exec("xmake config --mode=coverage")
+
+        try
+        {
+            function()
+                os.exec("xmake test-report")
+                os.exec("xmake coverage-report")
+            end,
+            catch
+            {
+                function()
+                    raise("coverage report not generated")
+                end,
+            },
+        }
     end)
