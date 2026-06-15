@@ -198,3 +198,42 @@ task("reports")
             },
         }
     end)
+
+    task("check-builds")
+    set_menu({
+        usage = "xmake check-builds",
+        description = "Build in coverage mode with compiler and module configurations"
+    })
+    on_run(function()
+        local configurations = {
+            { toolchain = "gcc", use_modules = "y" },
+            { toolchain = "gcc", use_modules = "n" },
+            { toolchain = "clang", use_modules = "y" },
+            { toolchain = "clang", use_modules = "n" },
+        }
+
+        for _, configuration in ipairs(configurations) do
+            os.exec("xmake clean -y")
+
+            local label = string.format(
+                "toolchain=%s, use_modules=%s",
+                configuration.toolchain,
+                configuration.use_modules
+            )
+
+            print("Checking build: %s", label)
+
+            os.execv("xmake", {
+                "f",
+                "--mode=coverage",
+                "--toolchain=" .. configuration.toolchain,
+                "--use_modules=" .. configuration.use_modules,
+                "-y",
+            })
+
+            os.exec("xmake -y")
+
+            print("Build passed: %s", label)
+        end
+    end)
+
