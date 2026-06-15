@@ -1,6 +1,6 @@
 set_project("tyghbn")
 set_version("1.0.0")
-set_xmakever("2.9.0")
+set_xmakever("2.8.7")
 
 add_moduledirs("scripts/xmake")
 
@@ -156,7 +156,7 @@ task("coverage-report")
         print("Generating coverage report at: %s", output_file)
         os.execv("gcovr", {
             "-r", ".",
-            "--exclude-directory", "tests",
+            "--exclude", "tests/",
             "--gcov-executable", gcov_executable,
             "--txt", path.join(output_dir, "report.txt"),
             "--html-details", path.join(output_dir, "index.html"),
@@ -182,7 +182,7 @@ task("reports")
     })
     on_run(function()
         -- Configure with coverage mode
-        os.exec("xmake config --mode=coverage")
+        os.exec("xmake config --mode=coverage -y")
 
         try
         {
