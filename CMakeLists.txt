@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 4.3.2)
+cmake_minimum_required(VERSION 4.0.2)
 project(tyghbn
   VERSION 1.0.0
   DESCRIPTION "A C++ utility library providing simple template functions"

@@ -2,7 +2,6 @@
 
 Repository template for C++ library package development
 
-
 ## Objectives
 
 This repository contains example code of a C++ library package project.
@@ -10,13 +9,14 @@ You can choose to build with or without the C++ module support.
 
 The development workflow has been tested with the following software installed:
 
-- [CMake](https://cmake.org/) 4.3.2
 - [GCC](https://gcc.gnu.org/) 15
 - [Clang](https://clang.llvm.org/) 18
   - [Extra Clang Tools](https://clang.llvm.org/extra/index.html) 18
   - [LLVM](https://llvm.org/) 18
 - [Python3](https://www.python.org/) 3.11.2
+- [CMake](https://cmake.org/) 4.0.2
 - [Conan](https://conan.io/) 2.28.1
+- [Xmake](https://xmake.io/) 3.0.7
 - [Gcovr](https://gcovr.com/) 8.6
 - [Docker](https://www.docker.com/) 29.5.3
 - [Just](https://just.systems/) 1.51.0
@@ -25,6 +25,35 @@ The development workflow has been tested with the following software installed:
 
 ## How to use this template
 
+### Choosing build system(s)
+
+There are two build systems configured for this project:
+
+- CMake, with Conan as the package manager
+- Xmake, with Xrepo as the package manager
+
+You can choose to use one of them or both.
+Note that if you want to use xmake only, but your dependencies require CMake
+and/or Conan, you will need to install them.
+
+If you do not need both build systems, you should delete files and references
+that are specific to the build system you do not need.
+
+#### CMake+Conan specific files and references
+
+- [`.pr`](.pr) subdirectory
+- [`ci/Dockerfile.alpine`](ci/Dockerfile.alpine) and
+  [`ci/Dockerfile.ubuntu`](ci/Dockerfile.ubuntu)
+- [`justfile`](justfile)
+- [`conanfile.py`](conanfile.py)
+- [`.github/workflows/cmake-pull-request.yml`](.github/workflows/cmake-pull-request.yml)
+  and
+  [`.github/workflows/cmake-check-builds.yml`](.github/workflows/cmake-check-builds.yml)
+- The job name `cmake-check-builds` in
+  [`.github/workflows/post-merge.yml`](.github/workflows/post-merge.yml).
+  - If you are not using CMake, you will need to remove the whole block of
+    `cmake-check-builds`
+
 ### Renaming
 
 This template is for a C++ library package. The package is named `Tyghbn`.
@@ -32,7 +61,7 @@ This name was chosen to be easy to type, and unique enough to find and replace.
 There are 3 variants of this name that occur in files in this repository:
 
 - `Tyghbn`: Used in [`conanfile.py`](conanfile.py) as a Python class name and
-  in Doxygen comment for the main page ([here](include/tyghbn/tyghbn.hpp)).
+  in Doxygen comment for the ([main page](include/tyghbn/tyghbn.hpp)).
 - `TYGHBN`: Used in variable names in scripts and C++ macros.
 - `tyghbn`: Used in C++ code as a namespace name, module names, and header file
   names.
@@ -41,10 +70,10 @@ You should rename these strings with proper variants of your project name in
 all files, as well as rename all files and subdirectories with `tyghbn` in
 their names.
 
-
 ### C++ code structure
 
 This template puts C++ code into 3 subdirectories:
+
 - [`include`](include): Header files that expose the public interface.
 - [`src`](src): `.cpp` files that implement non-template entities.
 - [`modules`](modules): `.cppm` files that expose C++ modules as the public
@@ -52,9 +81,9 @@ This template puts C++ code into 3 subdirectories:
 
 To support both the header style and the C++ module style, the main code logic
 must be independent of C++ modules. That means the main implementation must be
-in the traditional C++ style: header files in [`include`](include) and 
+in the traditional C++ style: header files in [`include`](include) and
 implementation files in [`src`](src).
-The C++ module interfaces, defined in [`modules`](modules), simply export 
+The C++ module interfaces, defined in [`modules`](modules), simply export
 entities from header files in [`include`](include). `.cppm` files in
 [`modules`](modules) show how to make a C++ module interface from a header
 file.
@@ -69,7 +98,6 @@ file.
   `module tyghbn.or_else` and `module tyghbn.add_one` under a new module name:
   `tyghbn`.
 
-
 In the [`modules`](modules) subdirectory, each of the `.cppm` files defines
 a C++ module from a header file of the same name.
 However, [`modules/tyghbn.cppm`](modules/tyghbn.cppm), which is the umbrella
@@ -82,7 +110,6 @@ The test library used here is [doctest](https://github.com/doctest/doctest).
 You can change the test library easily by modifying the dependency in
 [`conanfile.py`](conanfile.py) and in [`CMakeLists.txt`](CMakeLists.txt).
 Read below for more details.
-
 
 ### CMakeLists.txt
 
@@ -107,7 +134,7 @@ a C++ module interface. Note that the directory structure of
 [`modules`](modules) is simpler than [`include/tyghbn`](include/tyghbn) as it
 does not need a nested `tyghbn` inside for disambiguation.
 
-**Base `-legacy` library targets**
+#### Base `-legacy` library targets
 
 For each of the main library targets, we also have a base `-legacy` library.
 For the non-C++-module case (when `TYGHBN_USE_MODULES` is not `ON`), this is
@@ -125,16 +152,14 @@ divergence, which is arguably a historical quirk of CMake.
 - When you are making a library with `.cpp` files, you can use the CMake code
   in the `TEMPLATE_BLOCK: Library with cpp files` as your guide.
 
-
-**Umbrella library target**
+#### Umbrella library target
 
 The base `-legacy` umbrella target is an `INTERFACE` library because it does
 not add any code on top of its submodules.
 The place you will need to modify is the list of submodules inside
 `target_link_libraries(tyghbn-legacy ...)`.
 
-
-**Test library**
+#### Test library
 
 This project uses [`doctest`](https://github.com/doctest/doctest) as the test
 library, but you can switch to a different library by modifying the following
@@ -145,13 +170,12 @@ things:
   `TEMPLATE_BLOCK: Test library finalization` in
   [CMakeLists.txt](CMakeLists.txt).
 
-
 ## Development instructions
 
 ### Prerequisites
 
 - C++ compiler that supports C++20 (GCC 15 or newer, Clang 18 or newer)
-- CMake 4.3.2 or newer
+- CMake 4.0.2 or newer
 - Conan 2.0 or newer
 
 #### Additional dependencies
@@ -197,20 +221,21 @@ things:
 ### Development environment
 
 The development environment setup can be split into the following stages:
-1.  [Conan install](#1-conan-install-stage)
+
+1. [Conan install](#1-conan-install-stage)
 
     Download necessary dependencies and prepare them for CMake.
 
-2.  [CMake configure](#2-cmake-configure-stage)
+2. [CMake configure](#2-cmake-configure-stage)
 
     Configure CMake: define
     [CMake targets](https://cmake.org/cmake/help/book/mastering-cmake/chapter/Key%20Concepts.html#targets).
 
-3.  [CMake build](#3-cmake-build-stage)
+3. [CMake build](#3-cmake-build-stage)
 
     Build code, i.e., CMake build targets.
 
-4.  [CTest](#4-ctest-stage)
+4. [CTest](#4-ctest-stage)
 
     Run tests.
 
@@ -218,6 +243,7 @@ The development environment setup can be split into the following stages:
 
 > **Prerequisite**: You need to have a Conan profile that contains your system
 > configuration. This is generally done by calling
+>
 > ```bash
 > conan profile detect --force
 > ```
@@ -230,6 +256,7 @@ conan install . --build=missing [...args]
 ```
 
 `[...args]` specifies choices to be made at this stage, which are:
+
 - Build type: There are 4 build types that CMake recognizes:
 
   - `Debug`
@@ -240,23 +267,29 @@ conan install . --build=missing [...args]
   You choose the build type by appending `-s build_type=...` to the
   `conan install` command.
   If you omit `-s`, the default is `Release`.
+
 - Compiler: Your default profile contains a default compiler, but you can
   override it.
+
   - You will actually need to override the C++ standard version in your
-    default profile because our code needs C++20, but `conan profile detect` 
+    default profile because our code needs C++20, but `conan profile detect`
     usually creates a profile with an older C++20 standard.
+
   - This repository provides the following Conan profiles for compiler choices:
     - [`.pr/gcc`](.pr/gcc): The GCC version is also fixed to >= 15.
     - [`.pr/clang`](.pr/clang): The Clang version is also fixed to >= 18.
   
   You can choose the compiler by appending `-pr .pr/...` to the
   `conan install` command.
+
 - Build generator: Your default generator is dependent on your operating
   system, but you can override it.
+
   - There are 2 types of *build generators*: single-config, and multi-config.
     The difference between these 2 types does not affect the workflow except
     in [step 2](#2-cmake-configure-stage) when you call
     `cmake --preset conan-...`.
+
   - This repository provides the following Conan profiles to override your
     default generator with [Ninja](https://ninja-build.org/):
     - [`.pr/ninja`](.pr/ninja): `Ninja`
@@ -264,19 +297,22 @@ conan install . --build=missing [...args]
   
   You can choose the generator by appending `-pr .pr/...` to the
   `conan install` command.
+
 - C++ module support: This repository supports building the package with and
   without C++ module interfaces. Appending one of the following options to
   the `conan install` command to make the choice:
+
   - `-o '&:use_modules=True'`: build with C++ module support
   - `-o '&:use_modules=False'`: build without C++ module support
   
   If not specified, `use_modules` defaults to `True`.
 
-**Examples**
+#### Examples
 
 - ```bash
   conan install . --build=missing -pr .pr/gcc -s build_type=Debug
   ```
+
   - Build type: `Debug`
   - Build generator: OS-provided
   - Compiler: GCC
@@ -285,6 +321,7 @@ conan install . --build=missing [...args]
 - ```bash
   conan install . --build=missing -pr .pr/clang -pr .pr/ninja-multi -o '&:use_modules=False'
   ```
+
   - Build type: `Release`
   - Build generator: Ninja multi-config
   - Compiler: Clang
@@ -293,6 +330,7 @@ conan install . --build=missing [...args]
 - ```bash
   conan install . --build=missing -pr .pr/gcc -pr .pr/ninja -o '&:use_modules=True' -s build_type=RelWithDebInfo
   ```
+
   - Build type: `RelWithDebInfo`
   - Build generator: Ninja
   - Compiler: GCC
@@ -303,34 +341,38 @@ prepare multiple build types at once, but you should not vary other options.
 You will have to remove the `build` subdirectory and `CMakeUserPresets.json` if
 you want to vary other options.
 
-
 ### 2. CMake configure stage
 
 This is where the difference between a single-config generator and a
 multi-config generator matters.
 
 - Single-config:
+
   ```bash
   cmake --preset conan-<build_type>
   ```
+
   This has to be executed for each build type that you have previously
   prepared with `conan install` in [step 1](#1-conan-install-stage),
   and `build_type` is a lowercase version of the build type.
 
   For example, if you want to use `Debug` and `MinSizeRel`, you will need to
   run 2 commands:
+
   ```bash
   cmake --preset conan-debug
   cmake --preset conan-minsizerel
   ```
+
   Note that `debug` and `minsizerel` are in lowercase.
 
 - Multi-config:
+
   ```bash
   cmake --preset conan-default
   ```
-  You only need to run this once.
 
+  You only need to run this once.
 
 #### Coverage information
 
@@ -338,7 +380,6 @@ If you want to generate coverage reports, you must append
 `-DTYGHBN_ENABLE_COVERAGE=ON` to the `cmake --preset` command.
 See the section [Generating code coverage reports](#generating-code-coverage-reports)
 below for more information.
-
 
 ### 3. CMake build stage
 
@@ -357,7 +398,6 @@ cmake --build --preset conan-debug
 
 will compile and build the package for the `Debug` build.
 
-
 ### 4. CTest stage
 
 After you have successfully compiled the code with `cmake --build`, you can run
@@ -374,7 +414,6 @@ ctest --preset conan-debug
 ```
 
 will run tests for the `Debug` build.
-
 
 ### Generating code coverage reports
 
@@ -393,7 +432,7 @@ code coverage instrumentation can be generated by adding
 Remember that there is a difference at this stage between using a single-config
 generator and using a multi-config generator.
 
-**Example**
+#### Example: Configure step for coverage information
 
 - Single-config generator
 
@@ -411,16 +450,16 @@ generator and using a multi-config generator.
   
   prepares coverage instrumentation for all build types.
 
-
 After configuring, the coverage reports can be made by building the `coverage`
 target, i.e., passing `--target coverage` to the `cmake --build` command in
 [stage 3](#3-cmake-build-stage).
 
-**Example**
+#### Example: Build step for coverage information
 
 - ```bash
   cmake --build --preset conan-debug --target coverage
   ```
+
   runs tests in the `Debug` mode and generates a coverage report.
 
 If this runs successfully, the coverage report will be generated in the
@@ -431,7 +470,6 @@ directory `build/<BuildType>/coverage_report/` in 4 formats:
 - `cobertura.xml`: Cobertura XML
 - `index.html`: HTML page
 
-
 ### Troubleshooting
 
 - In order to use Clang with C++ modules, you will need `clang-scan-deps` to
@@ -439,6 +477,7 @@ directory `build/<BuildType>/coverage_report/` in 4 formats:
     https://clang.llvm.org/extra/index.html).
 - In order to generate coverage information with `gcc`, `gcov` must be
   accessible and have the same version as `gcc`.
+  - If `gcc` fails to compile, check if its version is at least 15.
 - In order to generate coverage information with `clang`, `llvm-cov` must be
   accessible and have the same version as `clang`.
 
@@ -475,15 +514,18 @@ Below is a summary of `just` commands available in [`justfile`](justfile):
   for C++ modules. (If absent, it defaults to `mod`.)
 
   Examples:
+
   - ```bash
     just init debug clang -
     ```
+
     Prepares for the debug build, using Clang as the compiler, without the
     `coverage` CMake target. The library will be built as a C++ module.
   
   - ```bash
     just init release gcc with-coverage -
     ```
+
     Prepares for the release build, using GCC as the compiler, with the
     `coverage` CMake target. The library will be built for classic header
     `#include`.
@@ -605,7 +647,7 @@ These shortcuts support only `Debug` and `Release` build types.
 If you want to use `MinSizeRel` or `RelWithDebInfo`, you will have to type the
 full commands.
 
-**One-line command**
+#### One-line command
 
 `just` commands that don't have arguments can be combined in a single line.
 For example,
@@ -613,11 +655,12 @@ For example,
 - ```bash
   just clean is bc sc
   ```
+
   will clean the build directory, initialize the build system, build the
   code coverage report, and display it.
 
 Note that a single line call with multiple `just` commands will not execute
-the same command listed more than once, so
+a command that is listed more than once, so
 `just clean id bd td clean im bd td` will not work properly because
 `just clean` will be executed only once.
 
@@ -767,10 +810,9 @@ Example:
   Same as `just clean-doc && just doc && just show-doc <port>`.
   The default `port` is 8060.
 
-
 ## Github Actions
 
-- [`pull-request.yml`](.github/workflows/pull-request.yml)
+- [`cmake-pull-request.yml`](.github/workflows/cmake-pull-request.yml)
 
   - Triggers when a PR is opened, updated, or reopened.
   - Runs `just make-reports` inside a Docker container based on the image in

@@ -29,7 +29,7 @@ function convert_junit_to_text(input_path, output_path)
     output_file:write(
         "Test summary: " ..
         num_successes .. " / " .. num_test_cases ..
-        " (" .. num_successes / num_test_cases * 100 .. "%%) passed\n"
+        " (" .. num_successes / num_test_cases * 100 .. "%) passed\n"
     )
     output_file:close()
 

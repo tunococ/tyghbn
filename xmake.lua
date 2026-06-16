@@ -77,8 +77,8 @@ task("test-report")
         usage = "xmake test-report",
         description =
             "Run tests and generate test reports\n" ..
-            "- JUnit format: build/test_results.xml\n" ..
-            "- Text summary: build/test_results.txt"
+            "- JUnit format: build/test-report.xml\n" ..
+            "- Text summary: build/test-report.txt"
         ,
     })
     on_run(function ()
@@ -88,7 +88,7 @@ task("test-report")
         os.exec("xmake")
 
         local output_dir = config.builddir()
-        local junit_results_path = path.join(output_dir, "test_results.xml")
+        local junit_results_path = path.join(output_dir, "test-report.xml")
         os.rm(junit_results_path)
         local test_status = os.execv(
             "xmake",
@@ -106,13 +106,13 @@ task("test-report")
         )
 
         import("doctest_helpers")
-        local text_results_path = path.join(output_dir, "test_results.txt")
+        local text_results_path = path.join(output_dir, "test-report.txt")
         local stats = doctest_helpers.convert_junit_to_text(
             junit_results_path,
             text_results_path
         )
 
-        print(io.readfile(text_results_path))
+        io.write(io.readfile(text_results_path) .. "\n")
 
         if stats.num_failures ~= 0 then
             raise(stats.num_failures .. " test cases failed")
@@ -141,7 +141,7 @@ task("coverage-report")
 
         os.exec("xmake test")
 
-        local output_dir = path.join(config.builddir(), "coverage")
+        local output_dir = path.join(config.builddir(), "coverage_report")
         local output_file = path.join(output_dir, "index.html")
         os.rm(output_dir)
         os.mkdir(output_dir)
@@ -162,6 +162,9 @@ task("coverage-report")
             "--html-details", path.join(output_dir, "index.html"),
             "--cobertura", path.join(output_dir, "cobertura.xml"),
             "--markdown", path.join(output_dir, "summary.md"),
+            "--txt-summary"
+        }, {
+            stdout = path.join(output_dir, "summary.txt")
         })
         print("Coverage report generated. Open %s to view.", output_file)
     end)
@@ -199,7 +202,7 @@ task("reports")
         }
     end)
 
-    task("check-builds")
+task("check-builds")
     set_menu({
         usage = "xmake check-builds",
         description = "Build in coverage mode with compiler and module configurations"
