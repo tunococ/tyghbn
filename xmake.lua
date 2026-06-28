@@ -4,22 +4,32 @@ set_xmakever("2.8.7")
 
 add_moduledirs("scripts/xmake")
 
-add_rules(
-    "mode.debug",
-    "mode.release",
-    "mode.minsizerel",
-    "mode.releasedbg",
-    "mode.coverage"
-)
-
 set_languages("cxx20")
 
-add_requires("doctest")
-
 option("use_modules")
-    set_default(false)
+    set_default(true)
     set_showmenu(true)
     set_description("Enable C++20 module support")
+
+option("pic")
+    set_default(true)
+    set_showmenu(true)
+    set_description("Enable Position Independent Code (-fPIC)")
+option_end()
+
+if has_config("pic") then
+    add_cxflags("-fPIC")
+end
+
+-- Dependency declarations
+-- =======================
+
+-- We need to set `cmake = false` to avoid invoking CMake when it's actually
+-- not needed. doctest can work without CMake.
+add_requires("doctest", {configs = {cmake = false}})
+
+-- Target delcarations
+-- ===================
 
 target("or_else")
     if has_config("use_modules") then
@@ -72,6 +82,10 @@ target("tests")
 
     add_tests("default")
 
+-- Task delcarations
+-- =================
+
+
 task("test-report")
     set_menu({
         usage = "xmake test-report",
@@ -85,7 +99,7 @@ task("test-report")
         import("core.project.config")
         config.load()
 
-        os.exec("xmake")
+        os.exec("xmake -y")
 
         local output_dir = config.builddir()
         local junit_results_path = path.join(output_dir, "test-report.xml")
@@ -234,7 +248,8 @@ task("check-builds")
                 "-y",
             })
 
-            os.exec("xmake -y")
+            os.exec("xmake")
+            os.exec("xmake coverage-report")
 
             print("Build passed: %s", label)
         end

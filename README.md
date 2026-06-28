@@ -25,39 +25,91 @@ The development workflow has been tested with the following software installed:
 
 ## How to use this template
 
-### Choosing build system(s)
+This repository provides a working example of a C++ library package named
+`Tyghbn`.
+The main steps to use this template properly are:
 
-There are two build systems configured for this project:
+1. Pick your build system.
+2. Rename `Tyghbn`, `tyghbn`, and `TYGHBN` to be your project name.
+3. Replace the example code with your own code.
 
-- CMake, with Conan as the package manager
-- Xmake, with Xrepo as the package manager
+### Build systems
+
+This repository supports 2 build systems:
+
+1. CMake, with Conan as the package manager.
+2. Xmake, with Xrepo as the package manager.
 
 You can choose to use one of them or both.
-Note that if you want to use xmake only, but your dependencies require CMake
-and/or Conan, you will need to install them.
-
 If you do not need both build systems, you should delete files and references
 that are specific to the build system you do not need.
 
-#### CMake+Conan specific files and references
+#### 1. CMake+Conan specific files and references
 
 - [`.pr`](.pr) subdirectory
+- [`cmake.just`](cmake.just)
+- [`conanfile.py`](conanfile.py)
+- [`CMakeLists.txt`](CMakeLists.txt)
 - [`ci/Dockerfile.alpine`](ci/Dockerfile.alpine) and
   [`ci/Dockerfile.ubuntu`](ci/Dockerfile.ubuntu)
-- [`justfile`](justfile)
-- [`conanfile.py`](conanfile.py)
 - [`.github/workflows/cmake-pull-request.yml`](.github/workflows/cmake-pull-request.yml)
   and
   [`.github/workflows/cmake-check-builds.yml`](.github/workflows/cmake-check-builds.yml)
-- The job name `cmake-check-builds` in
+- The job named `cmake-check-builds` in
   [`.github/workflows/post-merge.yml`](.github/workflows/post-merge.yml).
   - If you are not using CMake, you will need to remove the whole block of
-    `cmake-check-builds`
+    `cmake-check-builds` as well as its references.
+    See all the `TODO:` in comments inside
+    [`.github/workflows/post-merge.yml`](.github/workflows/post-merge.yml)
+    for more information.
 
-### Renaming
+Shell command for removing CMake+Conan specific files:
 
-This template is for a C++ library package. The package is named `Tyghbn`.
-This name was chosen to be easy to type, and unique enough to find and replace.
+```bash
+rm -rf .pr cmake.just conanfile.py CMakeLists.txt \
+    ci/Dockerfile.alpine ci/Dockerfile.ubuntu \
+    .github/workflows/cmake-pull-request.yml \
+    .github/workflows/cmake-check-builds.yml \
+```
+
+Remember to clean up all the `TODO:` in
+[`.github/workflows/post-merge.yml`](.github/workflows/post-merge.yml)
+accordingly.
+
+#### 2. Xmake+Xrepo specific files and references
+
+- [`scripts/xmake`](scripts/xmake) subdirectory
+- [`xmake.lua`](xmake.lua)
+- [`ci/Dockerfile.alpine-xmake`](ci/Dockerfile.alpine-xmake) and
+  [`ci/Dockerfile.ubuntu-xmake`](ci/Dockerfile.ubuntu-xmake)
+- [`.github/workflows/xmake-pull-request.yml`](.github/workflows/xmake-pull-request.yml)
+  and
+  [`.github/workflows/xmake-check-builds.yml`](.github/workflows/xmake-check-builds.yml)
+- The job named `xmake-check-builds` in
+  [`.github/workflows/post-merge.yml`](.github/workflows/post-merge.yml).
+  - If you are not using Xmake, you will need to remove the whole block of
+    `xmake-check-builds` as well as its references.
+    See comments in
+    [`.github/workflows/post-merge.yml`](.github/workflows/post-merge.yml)
+    for more information.
+
+Shell command for removing Xmake+Xrepo specific files:
+
+```bash
+rm -rf scripts/xmake xmake.lua \
+    ci/Dockerfile.alpine-xmake ci/Dockerfile.ubuntu-xmake \
+    .github/workflows/xmake-pull-request.yml \
+    .github/workflows/xmake-check-builds.yml \
+```
+
+Remember to clean up all the `TODO:` in
+[`.github/workflows/post-merge.yml`](.github/workflows/post-merge.yml)
+accordingly.
+
+### Renaming `tyghbn`
+
+This template is for a C++ library package named `Tyghbn`.
+This name was chosen to be easy to type and unique enough to find and replace.
 There are 3 variants of this name that occur in files in this repository:
 
 - `Tyghbn`: Used in [`conanfile.py`](conanfile.py) as a Python class name and
@@ -70,9 +122,9 @@ You should rename these strings with proper variants of your project name in
 all files, as well as rename all files and subdirectories with `tyghbn` in
 their names.
 
-### C++ code structure
+### Replacing example code with your code
 
-This template puts C++ code into 3 subdirectories:
+The provided code template puts C++ code into 3 subdirectories:
 
 - [`include`](include): Header files that expose the public interface.
 - [`src`](src): `.cpp` files that implement non-template entities.
@@ -102,14 +154,92 @@ In the [`modules`](modules) subdirectory, each of the `.cppm` files defines
 a C++ module from a header file of the same name.
 However, [`modules/tyghbn.cppm`](modules/tyghbn.cppm), which is the umbrella
 C++ module interface, does not include
-[`tyghbn.hpp`](include/tyghbn/tyghbn.hpp). Instead, it `imports` the other 2 `.cppm` files, similar to how [`tyghbn.hpp`](include/tyghbn/tyghbn.hpp)
+[`tyghbn.hpp`](include/tyghbn/tyghbn.hpp). Instead, it `imports` the other 2
+`.cppm` files, similar to how [`tyghbn.hpp`](include/tyghbn/tyghbn.hpp)
 includes the other 2 `.hpp` files.
 
 Test code lives in [`tests`](tests).
 The test library used here is [doctest](https://github.com/doctest/doctest).
 You can change the test library easily by modifying the dependency in
-[`conanfile.py`](conanfile.py) and in [`CMakeLists.txt`](CMakeLists.txt).
+[`conanfile.py`](conanfile.py), [`CMakeLists.txt`](CMakeLists.txt), and/or
+[`xmake.lua`](xmake.lua).
 Read below for more details.
+
+## Development environment
+
+You will need to have certain applications installed on your system to build
+and run code in this repository.
+The set of required applications varies based on your configuration choices.
+
+- **For compilation**
+  - GCC version 15 or newer, and/or Clang version 18 or newer.
+
+- **For CMake + Conan**
+  - [CMake](https://cmake.org/) version 4.0.2 or newer.
+  - [Conan](https://conan.io/) version 2.0 or newer.
+  - [Ninja](https://ninja-build.org/) (version 1.11.0 or newer).
+    - Note: [GNU Make](https://www.gnu.org/software/make/) could be used
+      instead, but because it doesn't support C++ modules, it is not
+      recommended.
+  - [`just`](https://github.com/casey/just) version 1.49.0 or newer.
+    - `just` is used to provide ergonomic commands for common tasks.
+      If you install `just`, you can use [`just` commands](#just-scripts)
+      defined in [`justfile`](justfile).
+  
+- **For Xmake + Xrepo**
+  - [Xmake](https://xmake.io/) version 3.0.7 or newer.
+    This comes with Xrepo.
+
+- **For Clang's C++ module support**
+  - [Extra Clang tools](https://clang.llvm.org/extra/).
+    - This provides `clang-scan-deps`, which is needed by `clang` to support
+      C++ modules.
+    - The version must match `clang`'s version.
+    - Note: The necessity of `clang-scan-deps` might be dropped in some future
+      versions of Clang.
+
+- **For coverage information**
+  - GCC needs `gcov` to produce coverage information. `gcov` is usually
+    included with `gcc`, so when you install GCC, you should already have
+    `gcov`.
+    - The code in [`CMakeLists.txt`](CMakeLists.txt) requires `gcov` to be
+      available at the command line.
+      If you had to alias some versioned `gcc` executable (for example, from
+      `gcc-15` to `gcc`), please make sure that you also have `gcov` available,
+      and that it has the same version as `gcc`.
+  - [`llvm-cov`](https://llvm.org/docs/CommandGuide/llvm-cov.html) is needed to
+    generate coverage information when Clang is the compiler.
+    It is usually *not* included with a common Clang installation, but it is
+    included in [`llvm`](https://llvm.org/).
+    - Similar to the `gcov` situation above, you need to make sure that
+      `llvm-cov` is available at the command line, and that its version is the
+      same as `clang`.
+  - [`gcovr`](https://gcovr.com/en/stable/installation.html) is needed to
+    generate coverage reports.
+
+- **For development in a Docker container**
+  - [Docker](https://www.docker.com/).
+  - [`just`](https://github.com/casey/just) version 1.49.0 or newer.
+    - [`justfile`](justfile) provides shorthand commands for some
+      Docker-related tasks.
+    - You can choose not to install `just` if you do not need those shorthand
+      commands.
+      You can use `docker` directly with the provided
+      [`compose.yaml`](ci/compose.yaml) and `Dockerfile`s in the [`ci`](ci)
+      subdirectory.
+
+- **For Doxygen documentation**
+  - [Doxygen](https://www.doxygen.nl/) version 1.9.8 or newer.
+  - [Graphviz](https://graphviz.org/). This is the default graph visualization
+    tool used by Doxygen to generate dependency graphs.
+  - [`just`](https://github.com/casey/just) version 1.49.0 or newer.
+    - [`justfile`](justfile) provides shorthand commands for some
+      Doxygen-related tasks.
+    - You can choose not to install `just` if you do not need those shorthand
+      commands.
+      Using `doxygen` directly is not very complicated.
+
+## Using CMake + Conan
 
 ### CMakeLists.txt
 
@@ -170,57 +300,9 @@ things:
   `TEMPLATE_BLOCK: Test library finalization` in
   [CMakeLists.txt](CMakeLists.txt).
 
-## Development instructions
+### CMake+Conan development workflow
 
-### Prerequisites
-
-- C++ compiler that supports C++20 (GCC 15 or newer, Clang 18 or newer)
-- CMake 4.0.2 or newer
-- Conan 2.0 or newer
-
-#### Additional dependencies
-
-- **For C++ module support**
-  - GNU Make doesn't support C++ modules.
-    [Ninja](https://ninja-build.org/) (version 1.12.0 or newer) is a
-    recommended replacement.
-  - `clang` needs `clang-scan-deps` command to be available.
-    You might need to install
-    [extra Clang tools](https://clang.llvm.org/extra/), and make sure
-    `clang-scan-deps` is available from the command line.
-
-- **For coverage information**
-  - [`gcovr`](https://gcovr.com/en/stable/installation.html) is needed to
-    generate coverage reports.
-  - GCC needs `gcov`. It is usually included with `gcc`. You only need to make
-    sure that it is available at the command line and that it has the same
-    version as `gcc`.
-  - Clang needs [`llvm-cov`](https://llvm.org/docs/CommandGuide/llvm-cov.html)
-    to be available at the command line.
-    You might need to install [`llvm`](https://llvm.org/) with the same version
-    as your installation of `clang`.
-
-- **For `just` commands**
-  - [`just`](https://github.com/casey/just) provides more ergonomic commands
-    for common command-line tasks.
-    If you install `just`, you can use [`just` commands](#just-scripts)
-    defined in [`justfile`](justfile).
-
-- **For development in a Docker container**
-  - The [`ci`](ci) subdirectory contains some Dockerfiles and a
-    [`compose.yaml`](ci/compose.yaml) that helps with making development-ready
-    Docker images and containers. See the [`Docker section`](#docker) for
-    more information.
-
-- **For Doxygen documentation**
-  - You will need [Doxygen](https://www.doxygen.nl/) version 1.9.8 or newer as
-    C++ module support was not available before that.
-  - Doxygen has a dependency on [Graphviz](https://graphviz.org/), so you might
-    need to install it too.
-
-### Development environment
-
-The development environment setup can be split into the following stages:
+The development workflow can be split into the following stages:
 
 1. [Conan install](#1-conan-install-stage)
 
@@ -273,7 +355,7 @@ conan install . --build=missing [...args]
 
   - You will actually need to override the C++ standard version in your
     default profile because our code needs C++20, but `conan profile detect`
-    usually creates a profile with an older C++20 standard.
+     usually creates a profile with an older C++ standard.
 
   - This repository provides the following Conan profiles for compiler choices:
     - [`.pr/gcc`](.pr/gcc): The GCC version is also fixed to >= 15.
@@ -691,13 +773,11 @@ a command that is listed more than once, so
   just check-builds
   ```
 
-  Cleans and builds for the debug build for the 4 combinations:
+  Cleans, builds, and runs tests for the debug build for the 4 combinations:
   - GCC with C++ modules
   - GCC with headers
   - Clang with C++ modules
   - Clang with headers
-
-  This is meant to be a big check whether the code compiles or not.
 
 - ```bash
   just make-reports [<compiler> [<modules>]]
@@ -710,7 +790,251 @@ a command that is listed more than once, so
   The coverage report is stored in
   [`build/Debug/coverage_report`](build/Debug/coverage_report).
 
-### Docker
+## Using Xmake + Xrepo
+
+### xmake.lua
+
+In [`xmake.lua`](xmake.lua), you will see two configuration options for the
+`tyghbn` project:
+
+- `use_modules`: Whether to support C++ modules or not.
+- `pic`: Whether to build code to be position independent or not.
+
+When you call `xmake f` (short for `xmake config`), you can choose the values
+for these options.
+
+There are 4 build targets in [`xmake.lua`](xmake.lua), each one is defined by
+the `target(...)` command:
+
+- `add_one`
+- `or_else`
+- `tyghbn`
+- `tests`
+
+The first three targets are library targets, while the last target (`tests`) is
+a binary target.
+
+Each library target
+has one header file in [`include/tyghbn`](include/tyghbn)
+and one module file in [`modules`](modules) of the same name.
+The header file exposes a traditional interface, while the module file exposes
+a C++ module interface. Note that the directory structure of
+[`modules`](modules) is simpler than [`include/tyghbn`](include/tyghbn) as it
+does not need a nested `tyghbn` inside for disambiguation.
+
+The command `add_files` is used to add both the implementation files (`.cpp`)
+and module interface files (`.cppm`).
+For module interface files, they must be explicitly marked as `public`.
+This is in contrast with `add_headerfiles`, which will make files public by
+default.
+
+Note that the Lua code for `add_one` is slightly different from `or_else`
+because `or_else` does not contain a `.cpp` file but `add_one` contains a
+`.cpp` file. This difference is only important when `use_modules` is `false`,
+which is when we need to set the *kind* of `or_else` to `headeronly` instead
+of `static`. When `use_modules` is `true`, both `add_one` and `or_else` can
+have the same kind (`static`).
+
+#### Umbrella library target
+
+The target named `tyghbn` is an umbrella target that reexports public entities
+from `add_one` and `or_else`.
+The *kind* of `tyghbn` is defined with the same logic as `or_else` because it
+only adds non-implementation files on top of its dependencies.
+
+#### Test library
+
+This project uses [`doctest`](https://github.com/doctest/doctest) as the test
+library, but you can switch to a different library by modifying the following
+things:
+
+- The `add_requires("doctest", {configs = {cmake = false}})` statement in the
+  `Dependency declarations` section.
+- The call to `add_packages("doctest")` in the `target("tests")` block.
+
+You do not need to explicitly tell Xmake that the test library is a "test-only"
+library. When you create a package, you can specify which targets you want to
+export, and Xmake will know which dependencies are used only by the targets you
+are exporting.
+
+### Xmake+Xrepo development workflow
+
+The workflow for using Xmake as the build system in your development can be
+separated into 3 stages:
+
+1. Xmake configure stage
+2. Xmake build stage
+3. Xmake test stage
+
+If you are ok with the default configuration, you can skip the configure stage.
+
+### 1. Xmake configure stage
+
+Before compiling code, you need to initialize the build environment by choosing
+configuration options as you run `xmake config [...args]`.
+Common options and their corresponding arguments are:
+
+- Build mode: `--mode=<mode>`
+  
+  Common values for `<mode>` are:
+
+  - `debug`
+  - `release`
+  - `releasedbg`: release with debug symbols
+  - `minsizerel`: release with minimized size
+  - `coverage`: debug with coverage information
+  - `profile`: debug with profiling information
+  - `check`: debug with extra checks (like asan and trapv)
+
+  *Note: This list is far from exhaustive. See Xmake's official
+  documentation for more information.*
+
+- Toolchain: `--toolchain=<toolchain>`
+
+  Common values for `<toolchain>` are:
+
+  - `gcc`
+  - `clang`
+
+- Project config `use_modules`: `--use_modules={y|n}`
+
+  Possible values:
+
+  - `y`: the project will support C++ modules. This is the default option.
+  - `n`: the project will not support C++ modules.
+
+- Project config `pic`: `--pic={y|n}`
+
+  Possible values:
+
+  - `y`: binary code will be compiled to be position independent.
+    This is the default option.
+  - `n`: binary code will not be compiled to be position independent.
+
+  *Note: It is generally ok to only support position independent compilation.*
+
+#### Examples
+
+- ```bash
+  xmake config
+  ```
+
+  Configures Xmake to use your system's default compiler, build in the
+  release mode, and support C++ modules.
+
+- ```bash
+  xmake config --toolchain=clang --mode=debug --use_modules=n
+  ```
+
+  Configures Xmake to use Clang as the compiler, build in the debug mode,
+  and omit support for C++ modules.
+
+#### Managing Xmake configurations
+
+Xmake stores all your configurations inside the [`.xmake`](.xmake)
+subdirectory.
+That means multiple configurations can exist at the same time, but only the
+*active*, i.e., the most recently configured one, will be used for subsequent
+`xmake` commands.
+You can simply call `xmake config` to switch your active configuration.
+
+##### Cleaning Xmake configurations
+
+You can call `xmake f -c` (short for `xmake config --clean`) to clean all
+configurations.
+
+Note that configuration files are separate from build artifacts, which will be
+in the [`build`](build) subdirectory.
+If you want to clean both the configuration files and the build artifacts, run
+`xmake clean-all`.
+
+### 2. Xmake build stage
+
+To compile the code, simply execute
+
+```bash
+xmake
+```
+
+You can skip this command and go directly to the test stage if you also want to
+run tests right after compiling.
+
+### 3. Xmake test stage
+
+To run tests, execute
+
+```bash
+xmake run tests
+```
+
+This will run the `tests` executable target defined in
+[`xmake.lua`](xmake.lua).
+
+### Composite Xmake tasks
+
+You can also run *tasks* that do more than just running tests:
+
+- ```bash
+  xmake test-report
+  ```
+
+  Runs tests and creates a test report.
+  The report will be stored in 2 files:
+
+  - [`build/test-report.xml`](build/test-report.xml):
+    JUnit XML format
+  - [`build/test-report.txt`](build/test-report.txt):
+    plaintext summary
+
+  *Note: This test report generation relies on doctest.
+  If you use a different test library, the provided code will not work.*
+
+- ```bash
+  xmake coverage-report
+  ```
+
+  Runs tests and creates a coverage report.
+  This will only work if your project active configuration has mode `coverage`.
+
+  The report will be stored in the directory
+  [`build/coverage_report`](build/coverage_report).
+  There are 4 formats of the report in this directory:
+
+  - [`build/coverage_report/cobertura.xml`](build/coverage_report/cobertura.xml):
+    Cobertura XML
+  - [`build/coverage_report/index.html`](build/coverage_report/index.html):
+    static HTML page
+  - [`build/coverage_report/summary.md`](build/coverage_report/summary.md):
+    markdown summary
+  - [`build/coverage_report/summary.txt`](build/coverage_report/summary.txt):
+    plaintext summary
+
+You can see how these tasks are defined in [`xmake.lua`](xmake.lua) under the
+section `Task declarations`.
+
+- ```bash
+  xmake clean-all
+  ```
+
+  Cleans all the project configurations and build artifacts.
+
+- ```bash
+  xmake reports
+  ```
+
+  Cleans the project configurations, configure with the `coverage` mode, then
+  create both a test report and a coverage report.
+
+- ```bash
+  xmake check-builds
+  ```
+
+  Builds and runs tests for different configurations.
+
+  - `toolchain=gcc` and `toolchain=clang`
+  - `use_modules=y` and `use_modules=n`
+
+## Docker
 
 Some Dockerfiles for development are provided in the [ci](ci) subdirectory.
 You can use the provided [`ci/compose.yaml`](ci/compose.yaml) to simplify
@@ -810,7 +1134,9 @@ Example:
   Same as `just clean-doc && just doc && just show-doc <port>`.
   The default `port` is 8060.
 
-## Github Actions
+## GitHub Actions
+
+### Pull request actions
 
 - [`cmake-pull-request.yml`](.github/workflows/cmake-pull-request.yml)
 
@@ -818,12 +1144,38 @@ Example:
   - Runs `just make-reports` inside a Docker container based on the image in
     [`Dockerfile.alpine`](ci/Dockerfile.alpine), then uploads test and
     coverage reports as artifacts.
+  - *Remove this file if you are not using CMake.*
+
+- [`xmake-pull-request.yml`](.github/workflows/xmake-pull-request.yml)
+
+  - Triggers when a PR is opened, updated, or reopened.
+  - Runs `xmake reports` inside a Docker container based on the image in
+    [`Dockerfile.alpine-xmake`](ci/Dockerfile.alpine-xmake), then uploads test
+    and coverage reports as artifacts.
+  - *Remove this file if you are not using Xmake.*
+
+### Post-merge actions
 
 - [`post-merge.yml`](.github/workflows/post-merge.yml)
 
-  - Triggers after a PR is merged into `main`.
+  - Triggers when there is a `push` action to the `main` branch.
+  - Runs workflows in `cmake-check-builds.yml` and `xmake-check-builds.yml`.
+    If they both succeed, the `stable` tag will be updated to point to the
+    tip of the `main` branch. Otherwise, a new issue will be created.
+  - *If you do not use both CMake and Xmake, you should edit this file.*
+
+- [`cmake-check-builds.yml`](.github/workflows/cmake-check-builds.yml)
+
+  - Triggers only when explicitly called by `post-merge.yml`.
   - Runs `just check-builds` inside Docker containers based on the images in
     [`Dockerfile.alpine`](ci/Dockerfile.alpine) and
     [`Dockerfile.ubuntu`](ci/Dockerfile.ubuntu).
-    If the command fails for any of the containers, a new issue will be
-    created.
+  - *Remove this file if you are not using CMake.*
+
+- [`xmake-check-builds.yml`](.github/workflows/xmake-check-builds.yml)
+
+  - Triggers only when explicitly called by `post-merge.yml`.
+  - Runs `xmake check-builds` inside Docker containers based on the images in
+    [`Dockerfile.alpine-xmake`](ci/Dockerfile.alpine-xmake) and
+    [`Dockerfile.ubuntu-xmake`](ci/Dockerfile.ubuntu-xmake).
+  - *Remove this file if you are not using Xmake.*

@@ -20,9 +20,6 @@ RUN apk add --no-cache \
     gcc \
     g++ \
     xmake \
-    ninja-build \
-    ninja-is-really-ninja \
-    cmake \
     git \
     gcovr \
     p7zip \
