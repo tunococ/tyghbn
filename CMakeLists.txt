@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 4.3.2)
+cmake_minimum_required(VERSION 4.0.2)
 project(tyghbn
   VERSION 1.0.0
   DESCRIPTION "A C++ utility library providing simple template functions"
@@ -257,7 +257,7 @@ if(PROJECT_IS_TOP_LEVEL AND NOT (DEFINED BUILD_TESTING AND NOT BUILD_TESTING))
                 "${TYGHBN_BUILD_DIR}/coverage_report/cobertura.xml"
                 --markdown
                 "${TYGHBN_BUILD_DIR}/coverage_report/summary.md"
-                --exclude "${CMAKE_SOURCE_DIR}/tests/.*"
+                --exclude "${CMAKE_SOURCE_DIR}/tests/"
                 --gcov-executable "${TYGHBN_GCOV_EXECUTABLE}"
                 --txt-summary >
                 "${TYGHBN_BUILD_DIR}/coverage_report/summary.txt"
