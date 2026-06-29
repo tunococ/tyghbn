@@ -86,7 +86,7 @@ target("tests")
     )
     add_deps("tyghbn")
     if has_config("use_modules") then
-        add_defines("TYGHBN_USE_MODULES")
+        add_defines("TYGHBN_USE_MODULES=1")
     end
 
     -- Uses the project root as the working directory
@@ -255,14 +255,6 @@ task("check-builds")
         for _, configuration in ipairs(configurations) do
             os.exec("xmake clean -y")
 
-            local label = string.format(
-                "toolchain=%s, use_modules=%s",
-                configuration.toolchain,
-                configuration.use_modules
-            )
-
-            print("Checking build: %s", label)
-
             -- Note: We disable build.sanitizer.undefined as a workaround as
             -- it does not work with GCC 15 when use_modules=y. However, this
             -- same configuration works fine with CMake, so this is likely a
@@ -275,9 +267,18 @@ task("check-builds")
                 policies = policies .. ",build.sanitizer.undefined"
             end
 
+            local label = string.format(
+                "toolchain=%s, use_modules=%s, policies=%s",
+                configuration.toolchain,
+                configuration.use_modules,
+                policies
+            )
+
+            print("Checking build: %s", label)
+
             os.execv("xmake", {
                 "config",
-                "--mode=coverage",
+                "--mode=debug",
                 "--toolchain=" .. configuration.toolchain,
                 "--use_modules=" .. configuration.use_modules,
                 "--policies=" .. policies,
@@ -285,8 +286,7 @@ task("check-builds")
                 "-y",
             })
 
-            os.exec("xmake")
-            os.exec("xmake coverage-report")
+            os.exec("xmake test-report")
 
             print("Build passed: %s", label)
         end

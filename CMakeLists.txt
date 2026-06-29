@@ -202,7 +202,7 @@ if(PROJECT_IS_TOP_LEVEL AND NOT (DEFINED BUILD_TESTING AND NOT BUILD_TESTING))
     if(TYGHBN_USE_MODULES)
       target_compile_definitions(test_tyghbn
         PRIVATE
-          TYGHBN_USE_MODULES
+          TYGHBN_USE_MODULES=1
       )
     endif()
 
