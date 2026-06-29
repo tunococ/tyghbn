@@ -100,7 +100,7 @@ jobs:
         run: |
           REPORT_MD=$(cat coverage/summary.md)
           REPORT_TXT=$(cat coverage/summary.txt)
-          SUMMARY=$(grep . coverage/summary.txt | tail -n 1)
+          SUMMARY=$(cat coverage/summary.txt | tr '\n' ' ')
 
           # Put the coverage report in the step summary
           cat coverage/summary.md >> $GITHUB_STEP_SUMMARY

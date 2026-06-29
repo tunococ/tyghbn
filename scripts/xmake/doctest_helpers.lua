@@ -27,9 +27,8 @@ function convert_junit_to_text(input_path, output_path)
     end
     local num_successes = num_test_cases - #failures
     output_file:write(
-        "Test summary: " ..
-        num_successes .. " / " .. num_test_cases ..
-        " (" .. num_successes / num_test_cases * 100 .. "%) passed\n"
+        (num_successes / num_test_cases * 100) .. "% tests passed, " ..
+        #failures .. " tests failed out of " .. num_test_cases .. "\n"
     )
     output_file:close()
 

@@ -172,6 +172,7 @@ else()
   # Additionally, it simplifies CMake code as tyghbn-legacy is itself a valid
   # library for the non-C++-module case.
 endif()
+### TEMPLATE_BLOCK_END: Umbrella library
 
 
 # Testing enabled only when the project is top-level and BUILD_TESTING is not

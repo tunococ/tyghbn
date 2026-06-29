@@ -82,7 +82,7 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           cat test-report.md >> $GITHUB_STEP_SUMMARY
 
-          SUMMARY=$(grep . test-report.txt | tail -n 1)
+          SUMMARY=$(tac test-report.txt | grep -m 1 -i "% test")
 
           # Set a commit status as the summary
           gh api --method POST \
@@ -100,7 +100,7 @@ jobs:
         run: |
           REPORT_MD=$(cat coverage/summary.md)
           REPORT_TXT=$(cat coverage/summary.txt)
-          SUMMARY=$(grep . coverage/summary.txt | tail -n 1)
+          SUMMARY=$(cat coverage/summary.txt | tr '\n' ' ')
 
           # Put the coverage report in the step summary
           cat coverage/summary.md >> $GITHUB_STEP_SUMMARY

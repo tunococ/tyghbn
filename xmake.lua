@@ -6,6 +6,17 @@ add_moduledirs("scripts/xmake")
 
 set_languages("cxx20")
 
+add_rules(
+    "mode.debug",
+    "mode.release",
+    "mode.releasedbg",
+    "mode.minsizerel",
+    "mode.coverage",
+    "mode.profile",
+    "mode.check",
+    "mode.valgrind"
+)
+
 option("use_modules")
     set_default(true)
     set_showmenu(true)
@@ -24,6 +35,7 @@ end
 -- Dependency declarations
 -- =======================
 
+-- Test library: doctest
 -- We need to set `cmake = false` to avoid invoking CMake when it's actually
 -- not needed. doctest can work without CMake.
 add_requires("doctest", {configs = {cmake = false}})
@@ -84,7 +96,6 @@ target("tests")
 
 -- Task delcarations
 -- =================
-
 
 task("test-report")
     set_menu({
