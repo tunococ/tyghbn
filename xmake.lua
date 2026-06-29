@@ -6,6 +6,17 @@ add_moduledirs("scripts/xmake")
 
 set_languages("cxx20")
 
+add_rules(
+    "mode.debug",
+    "mode.release",
+    "mode.releasedbg",
+    "mode.minsizerel",
+    "mode.coverage",
+    "mode.profile",
+    "mode.check",
+    "mode.valgrind"
+)
+
 option("use_modules")
     set_default(true)
     set_showmenu(true)
