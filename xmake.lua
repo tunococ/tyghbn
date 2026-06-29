@@ -24,6 +24,7 @@ end
 -- Dependency declarations
 -- =======================
 
+-- Test library: doctest
 -- We need to set `cmake = false` to avoid invoking CMake when it's actually
 -- not needed. doctest can work without CMake.
 add_requires("doctest", {configs = {cmake = false}})

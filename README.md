@@ -1,27 +1,45 @@
 # tyghbn
 
-Repository template for C++ library package development
+Repository template for a C++ library package
 
-## Objectives
+## Features
 
-This repository contains example code of a C++ library package project.
-You can choose to build with or without the C++ module support.
+This repository contains example code for a C++ library package project
+with the following features:
 
-The development workflow has been tested with the following software installed:
+- Two build systems are supported:
 
-- [GCC](https://gcc.gnu.org/) 15
-- [Clang](https://clang.llvm.org/) 18
-  - [Extra Clang Tools](https://clang.llvm.org/extra/index.html) 18
-  - [LLVM](https://llvm.org/) 18
-- [Python3](https://www.python.org/) 3.11.2
-- [CMake](https://cmake.org/) 4.0.2
-- [Conan](https://conan.io/) 2.28.1
-- [Xmake](https://xmake.io/) 3.0.7
-- [Gcovr](https://gcovr.com/) 8.6
-- [Docker](https://www.docker.com/) 29.5.3
-- [Just](https://just.systems/) 1.51.0
-- [Doxygen](https://www.doxygen.nl/) 1.18.0
-  - [Graphviz](https://graphviz.org/) 2.43.0
+  - CMake + Conan
+  - Xmake + Xrepo
+
+- The project contains simple code examples for 3 types of libraries:
+
+  - An ordinary (static) library.
+  - A header-only library.
+  - An umbrella library that re-exports other libraries.
+
+- Code can be built with or without C++ modules.
+
+  - The choice to support C++ modules can be made during the *configuration
+    stage*.
+
+- Test code that integrates with [doctest](https://github.com/doctest/doctest)
+  is provided.
+
+- Shorthand scripts for common tasks are provided via
+  [`just`](https://just.systems/) (and `xmake`).
+
+  - Scripts to generate test and code coverage reports are provided.
+  - Scripts to build and run tests with sanitizers are provided.
+
+- Dockerfiles for testing in the CI environment are provided.
+
+- Code documentation can be generated with Doxygen.
+
+- GitHub Actions workflows are provided.
+
+  - Pull request checks use Dockerfiles in the [ci](ci) subdirectory.
+  - Post-merge checks will automatically create a GitHub issue on failure.
 
 ## How to use this template
 
@@ -69,7 +87,7 @@ Shell command for removing CMake+Conan specific files:
 rm -rf .pr cmake.just conanfile.py CMakeLists.txt \
     ci/Dockerfile.alpine ci/Dockerfile.ubuntu \
     .github/workflows/cmake-pull-request.yml \
-    .github/workflows/cmake-check-builds.yml \
+    .github/workflows/cmake-check-builds.yml
 ```
 
 Remember to clean up all the `TODO:` in
@@ -99,7 +117,7 @@ Shell command for removing Xmake+Xrepo specific files:
 rm -rf scripts/xmake xmake.lua \
     ci/Dockerfile.alpine-xmake ci/Dockerfile.ubuntu-xmake \
     .github/workflows/xmake-pull-request.yml \
-    .github/workflows/xmake-check-builds.yml \
+    .github/workflows/xmake-check-builds.yml
 ```
 
 Remember to clean up all the `TODO:` in
@@ -124,7 +142,13 @@ their names.
 
 ### Replacing example code with your code
 
-The provided code template puts C++ code into 3 subdirectories:
+The example code consists of 3 libraries:
+
+- `or_else`: a binary-less (header-only) library.
+- `add_one`: a normal library.
+- `tyghbn`: an umbrella library that reexports `or_else` and `add_one`.
+
+The files for these libraries live in 3 subdirectories:
 
 - [`include`](include): Header files that expose the public interface.
 - [`src`](src): `.cpp` files that implement non-template entities.
@@ -136,9 +160,10 @@ must be independent of C++ modules. That means the main implementation must be
 in the traditional C++ style: header files in [`include`](include) and
 implementation files in [`src`](src).
 The C++ module interfaces, defined in [`modules`](modules), simply export
-entities from header files in [`include`](include). `.cppm` files in
-[`modules`](modules) show how to make a C++ module interface from a header
-file.
+entities from header files in [`include`](include).
+
+`.cppm` files in [`modules`](modules) define C++ module interfaces from header
+files:
 
 - [`modules/or_else.cppm`](modules/or_else.cppm) defines
   `module tyghbn.or_else` that exposes names from
@@ -150,29 +175,30 @@ file.
   `module tyghbn.or_else` and `module tyghbn.add_one` under a new module name:
   `tyghbn`.
 
-In the [`modules`](modules) subdirectory, each of the `.cppm` files defines
-a C++ module from a header file of the same name.
-However, [`modules/tyghbn.cppm`](modules/tyghbn.cppm), which is the umbrella
+Note that [`modules/tyghbn.cppm`](modules/tyghbn.cppm), which is the umbrella
 C++ module interface, does not include
 [`tyghbn.hpp`](include/tyghbn/tyghbn.hpp). Instead, it `imports` the other 2
 `.cppm` files, similar to how [`tyghbn.hpp`](include/tyghbn/tyghbn.hpp)
 includes the other 2 `.hpp` files.
 
+#### Test code
+
 Test code lives in [`tests`](tests).
 The test library used here is [doctest](https://github.com/doctest/doctest).
-You can change the test library easily by modifying the dependency in
-[`conanfile.py`](conanfile.py), [`CMakeLists.txt`](CMakeLists.txt), and/or
-[`xmake.lua`](xmake.lua).
-Read below for more details.
 
-## Development environment
+You can change the test library by modifying the dependency in
+[`conanfile.py`](conanfile.py), [`CMakeLists.txt`](CMakeLists.txt), and/or
+[`xmake.lua`](xmake.lua), as well as fixing doctest-specific code.
+
+## Environment setup
 
 You will need to have certain applications installed on your system to build
 and run code in this repository.
 The set of required applications varies based on your configuration choices.
 
 - **For compilation**
-  - GCC version 15 or newer, and/or Clang version 18 or newer.
+  - [GCC](https://gcc.gnu.org/) version 15 or newer, and/or
+    [Clang](https://clang.llvm.org/) version 18 or newer.
 
 - **For CMake + Conan**
   - [CMake](https://cmake.org/) version 4.0.2 or newer.
@@ -238,6 +264,28 @@ The set of required applications varies based on your configuration choices.
     - You can choose not to install `just` if you do not need those shorthand
       commands.
       Using `doxygen` directly is not very complicated.
+
+You can use Dockerfiles in the [ci](ci) subdirectory as guidelines for your
+environment setup. Note, however, that not all applications are included in
+those Dockerfiles as they are meant for only one build system at a time
+(CMake or XMake), and they do not contain Docker and Doxygen.
+
+*Developer's note: This repository is being developed on Ubuntu 24.04.4 and
+Penguin Linux (Debian Forky/SID) with the following software:*
+
+- [GCC](https://gcc.gnu.org/) 15
+- [Clang](https://clang.llvm.org/) 18
+  - [Extra Clang Tools](https://clang.llvm.org/extra/index.html) 18
+  - [LLVM](https://llvm.org/) 18
+- [Python3](https://www.python.org/) 3.11.2
+- [CMake](https://cmake.org/) 4.0.2
+- [Conan](https://conan.io/) 2.28.1
+- [Xmake](https://xmake.io/) 3.0.7
+- [Gcovr](https://gcovr.com/) 8.6
+- [Docker](https://www.docker.com/) 29.5.3
+- [Just](https://just.systems/) 1.51.0
+- [Doxygen](https://www.doxygen.nl/) 1.18.0
+  - [Graphviz](https://graphviz.org/) 2.43.0
 
 ## Using CMake + Conan
 
@@ -568,13 +616,6 @@ This configures the project to compile tests with `-fsanitize=address,undefined`
 The value of `TYGHBN_SANITIZE` is passed directly to the compiler's
 `-fsanitize` flag, so you can specify any sanitizer supported by your compiler.
 
-With GCC and Clang, common values include:
-
-- `address`: AddressSanitizer (ASan)
-- `undefined`: UndefinedBehaviorSanitizer (UBSan)
-- `address,undefined`: ASan + UBSan
-- `thread`: ThreadSanitizer (TSan)
-
 #### Example: Configure step for sanitizers
 
 - Single-config generator
@@ -883,8 +924,9 @@ does not need a nested `tyghbn` inside for disambiguation.
 
 The command `add_files` is used to add both the implementation files (`.cpp`)
 and module interface files (`.cppm`).
-For module interface files, they must be explicitly marked as `public`.
-This is in contrast with `add_headerfiles`, which will make files public by
+For module interface files, they must be explicitly marked as `public` to be
+available to the consumer.
+This is in contrast with `add_headerfiles`, which makes files public by
 default.
 
 Note that the Lua code for `add_one` is slightly different from `or_else`
@@ -892,7 +934,7 @@ because `or_else` does not contain a `.cpp` file but `add_one` contains a
 `.cpp` file. This difference is only important when `use_modules` is `false`,
 which is when we need to set the *kind* of `or_else` to `headeronly` instead
 of `static`. When `use_modules` is `true`, both `add_one` and `or_else` can
-have the same kind (`static`).
+have the same kind (`static` here).
 
 #### Umbrella library target
 
@@ -910,6 +952,10 @@ things:
 - The `add_requires("doctest", {configs = {cmake = false}})` statement in the
   `Dependency declarations` section.
 - The call to `add_packages("doctest")` in the `target("tests")` block.
+- The task `test-report`, which supplies doctest-specific arguments to
+  the target named `tests`, and parses the JUnit output by calling
+  a function from
+  [`scripts/xmake/doctest_helpers.lua`](scripts/xmake/doctest_helpers.lua).
 
 You do not need to explicitly tell Xmake that the test library is a "test-only"
 library. When you create a package, you can specify which targets you want to
