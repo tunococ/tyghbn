@@ -291,12 +291,6 @@ Penguin Linux (Debian Forky/SID) with the following software:*
 
 ### CMakeLists.txt
 
-To support choosing between compiling for C++ modules or not, a variable named
-`TYGHBN_USE_MODULES` can be set during the build configuration time to specify
-this choice. When you call `conan install`, the Conan option `use_modules` will
-translate to `TYGHBN_USE_MODULES` in CMake.
-This logic lives in `Tyghbn.generate` in [`conanfile.py`](conanfile.py).
-
 [`CMakeLists.txt`](CMakeLists.txt) defines 3 main library targets:
 
 - `add_one`
@@ -348,7 +342,21 @@ things:
   `TEMPLATE_BLOCK: Test library finalization` in
   [CMakeLists.txt](CMakeLists.txt).
 
+#### `TYGHBN_USE_MODULES` macro
+
+To support choosing between compiling for C++ modules or not, a variable named
+`TYGHBN_USE_MODULES` in `CMakeLists.txt` can be set during the
+[CMake configure stage](#2-cmake-configure-stage), and it will be passed as a
+macro into C++ code.
+
+When you call `conan install`, you can specify a Conan option named
+`use_modules`, which will translate to `TYGHBN_USE_MODULES` in CMake.
+This logic lives in `Tyghbn.generate` in [`conanfile.py`](conanfile.py).
+
 ### CMake+Conan development workflow
+
+*TL;DR - use `just detect id` to initialize the build system, and
+use `just bd td` to build and run tests.*
 
 The development workflow can be split into the following stages:
 
@@ -963,16 +971,32 @@ library. When you create a package, you can specify which targets you want to
 export, and Xmake will know which dependencies are used only by the targets you
 are exporting.
 
+#### `TYGHBN_USE_MODULES` macro
+
+To support choosing between compiling for C++ modules or not, a package
+configuration option named `use_modules` is provided in `xmake.lua`.
+It can be set in the
+[XMake configure stage](#1-xmake-configure-stage), and it will be passed as a
+macro named `TYGHBN_USE_MODULES` into C++ code.
+
 ### Xmake+Xrepo development workflow
+
+*TL;DR - use `xmake test` to build and run tests.*
 
 The workflow for using Xmake as the build system in your development can be
 separated into 3 stages:
 
-1. Xmake configure stage
-2. Xmake build stage
-3. Xmake test stage
+1. [Xmake configure](#1-xmake-configure-stage)
 
-If you are ok with the default configuration, you can skip the configure stage.
+   Configure build options and prepare dependencies.
+
+2. [Xmake build](#2-xmake-build-stage)
+
+   Build libraries and test code.
+
+3. [Xmake test](#3-xmake-test-stage)
+
+   Run tests.
 
 ### 1. Xmake configure stage
 
@@ -1034,7 +1058,8 @@ Common options and their corresponding arguments are:
     This is the default option.
   - `n`: the compiled binary code will not be position-independent.
 
-  *Note: It is generally ok to only support position independent compilation.*
+  *Note: Unless you really know what you are doing, there's no need to touch
+  this option. Position-independent code is the modern standard.*
 
 #### Examples
 
@@ -1136,9 +1161,6 @@ You can also run *tasks* that do more than just running tests:
   - [`build/coverage_report/summary.txt`](build/coverage_report/summary.txt):
     plaintext summary
 
-You can see how these tasks are defined in [`xmake.lua`](xmake.lua) under the
-section `Task declarations`.
-
 - ```bash
   xmake clean-all
   ```
@@ -1151,7 +1173,7 @@ section `Task declarations`.
 
   Cleans the project configurations, configure with the `coverage` mode and
   with PIC, ASan and UBSan enabled, then create both a test report and a
-  coverage report.
+  coverage report by calling `xmake test-report` and `xmake coverage-report`.
 
   **Note: The configuration has `--use_modules=n` because there is a bug in
   Xmake causing GCC 15 to fail to build if `use_modules=y` and UBSan is
@@ -1176,6 +1198,9 @@ section `Task declarations`.
   If you happen to use a newer version of XMake or a newer version of
   GCC, you should try to see if `build.sanitizer.undefined` can stay enabled
   throughout all the configurations.**
+
+You can see how these tasks are defined in [`xmake.lua`](xmake.lua) under the
+section `Task declarations`.
 
 ### Troubleshooting
 
