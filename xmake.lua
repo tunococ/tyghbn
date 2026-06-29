@@ -80,7 +80,7 @@ target("tests")
     -- Uses the project root as the working directory
     set_rundir("$(projectdir)")
 
-    add_tests("default")
+    add_tests("default", { realtime_output = true })
 
 -- Task delcarations
 -- =================
@@ -199,7 +199,12 @@ task("reports")
     })
     on_run(function()
         -- Configure with coverage mode
-        os.exec("xmake config --mode=coverage -y")
+        os.execv("xmake", {
+            "config",
+            "--mode=coverage",
+            "--policies=build.sanitizer.address,build.sanitizer.undefined",
+            "-y",
+        })
 
         try
         {
@@ -241,10 +246,11 @@ task("check-builds")
             print("Checking build: %s", label)
 
             os.execv("xmake", {
-                "f",
+                "config",
                 "--mode=coverage",
                 "--toolchain=" .. configuration.toolchain,
                 "--use_modules=" .. configuration.use_modules,
+                "--policies=build.sanitizer.address,build.sanitizer.undefined",
                 "-y",
             })
 
