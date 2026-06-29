@@ -213,7 +213,8 @@ if(PROJECT_IS_TOP_LEVEL AND NOT (DEFINED BUILD_TESTING AND NOT BUILD_TESTING))
           PRIVATE
             -fsanitize=${TYGHBN_SANITIZE}
             -fno-omit-frame-pointer
-            -O1 -g
+            -Og -g
+            -fno-sanitize-recover=all
         )
         target_link_options(test_tyghbn
           PRIVATE

@@ -967,6 +967,11 @@ Common options and their corresponding arguments are:
   It is recommended to enable these sanitizers during development.
   (They are not enabled by default.)
 
+  **Note: There is a bug in Xmake causing the compilation to fail when
+  `build.sanitizer.undefined` is enabled, GCC 15 is used, and `use_modules` is
+  `true`. If you are using a newer version of Xmake or a newer version of GCC,
+  you should try to see if `build.sanitizer.undefined` can be enabled.**
+
 - Project config `use_modules`: `--use_modules={y|n}`
 
   Possible values:
@@ -1099,6 +1104,11 @@ section `Task declarations`.
   with PIC, ASan and UBSan enabled, then create both a test report and a
   coverage report.
 
+  **Note: The configuration has `--use_modules=n` because there is a bug in
+  Xmake causing GCC 15 to fail to build if `use_modules=y` and UBSan is
+  enabled. If you happen to use a newer version of XMake or a newer version of
+  GCC, you should try to see if flipping `use_modules` to `y` works.**
+
 - ```bash
   xmake check-builds
   ```
@@ -1109,6 +1119,24 @@ section `Task declarations`.
   - `use_modules=y` and `use_modules=n`
 
   PIC, ASan and UBSan will be enabled.
+
+  **Note: There is a bug in Xmake causing GCC 15 to fail to build if
+  `use_modules=y` and UBSan is enabled. The current code in `xmake.lua` has a
+  workaround to disable `build.sanitizer.undefined` for this specific
+  configuration.
+  If you happen to use a newer version of XMake or a newer version of
+  GCC, you should try to see if `build.sanitizer.undefined` can stay enabled
+  throughout all the configurations.**
+
+### Troubleshooting
+
+- There is a bug in Xmake causing GCC 15 to fail to build if `use_modules=y`
+  and UBSan is enabled. This same configuration works fine with Clang.
+  - Because of this, the tasks `xmake reports` and `xmake check-builds` skip
+    this problematic configuration.
+  - If you happen to use a newer version of XMake or a
+    newer version of GCC, you should try to see if `build.sanitizer.undefined`
+    can be enabled without breaking the build.
 
 ## Docker
 
