@@ -70,15 +70,15 @@ that are specific to the build system you do not need.
 - [`CMakeLists.txt`](CMakeLists.txt)
 - [`ci/Dockerfile.alpine`](ci/Dockerfile.alpine) and
   [`ci/Dockerfile.ubuntu`](ci/Dockerfile.ubuntu)
-- [`.github/workflows/cmake-pull-request.yml`](.github/workflows/cmake-pull-request.yml)
+- [`.github/workflows/cmake-pull-request.yaml`](.github/workflows/cmake-pull-request.yaml)
   and
-  [`.github/workflows/cmake-check-builds.yml`](.github/workflows/cmake-check-builds.yml)
+  [`.github/workflows/cmake-check-builds.yaml`](.github/workflows/cmake-check-builds.yaml)
 - The job named `cmake-check-builds` in
-  [`.github/workflows/post-merge.yml`](.github/workflows/post-merge.yml).
+  [`.github/workflows/post-merge.yaml`](.github/workflows/post-merge.yaml).
   - If you are not using CMake, you will need to remove the whole block of
     `cmake-check-builds` as well as its references.
     See all the `TODO:` in comments inside
-    [`.github/workflows/post-merge.yml`](.github/workflows/post-merge.yml)
+    [`.github/workflows/post-merge.yaml`](.github/workflows/post-merge.yaml)
     for more information.
 
 Shell command for removing CMake+Conan specific files:
@@ -86,12 +86,12 @@ Shell command for removing CMake+Conan specific files:
 ```bash
 rm -rf .pr cmake.just conanfile.py CMakeLists.txt \
     ci/Dockerfile.alpine ci/Dockerfile.ubuntu \
-    .github/workflows/cmake-pull-request.yml \
-    .github/workflows/cmake-check-builds.yml
+    .github/workflows/cmake-pull-request.yaml \
+    .github/workflows/cmake-check-builds.yaml
 ```
 
 Remember to clean up all the `TODO:` in
-[`.github/workflows/post-merge.yml`](.github/workflows/post-merge.yml)
+[`.github/workflows/post-merge.yaml`](.github/workflows/post-merge.yaml)
 accordingly.
 
 #### 2. Xmake+Xrepo specific files and references
@@ -100,15 +100,15 @@ accordingly.
 - [`xmake.lua`](xmake.lua)
 - [`ci/Dockerfile.alpine-xmake`](ci/Dockerfile.alpine-xmake) and
   [`ci/Dockerfile.ubuntu-xmake`](ci/Dockerfile.ubuntu-xmake)
-- [`.github/workflows/xmake-pull-request.yml`](.github/workflows/xmake-pull-request.yml)
+- [`.github/workflows/xmake-pull-request.yaml`](.github/workflows/xmake-pull-request.yaml)
   and
-  [`.github/workflows/xmake-check-builds.yml`](.github/workflows/xmake-check-builds.yml)
+  [`.github/workflows/xmake-check-builds.yaml`](.github/workflows/xmake-check-builds.yaml)
 - The job named `xmake-check-builds` in
-  [`.github/workflows/post-merge.yml`](.github/workflows/post-merge.yml).
+  [`.github/workflows/post-merge.yaml`](.github/workflows/post-merge.yaml).
   - If you are not using Xmake, you will need to remove the whole block of
     `xmake-check-builds` as well as its references.
     See comments in
-    [`.github/workflows/post-merge.yml`](.github/workflows/post-merge.yml)
+    [`.github/workflows/post-merge.yaml`](.github/workflows/post-merge.yaml)
     for more information.
 
 Shell command for removing Xmake+Xrepo specific files:
@@ -116,12 +116,12 @@ Shell command for removing Xmake+Xrepo specific files:
 ```bash
 rm -rf scripts/xmake xmake.lua \
     ci/Dockerfile.alpine-xmake ci/Dockerfile.ubuntu-xmake \
-    .github/workflows/xmake-pull-request.yml \
-    .github/workflows/xmake-check-builds.yml
+    .github/workflows/xmake-pull-request.yaml \
+    .github/workflows/xmake-check-builds.yaml
 ```
 
 Remember to clean up all the `TODO:` in
-[`.github/workflows/post-merge.yml`](.github/workflows/post-merge.yml)
+[`.github/workflows/post-merge.yaml`](.github/workflows/post-merge.yaml)
 accordingly.
 
 ### Renaming `tyghbn`
@@ -1316,7 +1316,7 @@ Example:
 
 ### Pull request actions
 
-- [`cmake-pull-request.yml`](.github/workflows/cmake-pull-request.yml)
+- [`cmake-pull-request.yaml`](.github/workflows/cmake-pull-request.yaml)
 
   - Triggers when a PR is opened, updated, or reopened.
   - Runs `just make-reports` inside a Docker container based on the image in
@@ -1324,7 +1324,7 @@ Example:
     coverage reports as artifacts.
   - *Remove this file if you are not using CMake.*
 
-- [`xmake-pull-request.yml`](.github/workflows/xmake-pull-request.yml)
+- [`xmake-pull-request.yaml`](.github/workflows/xmake-pull-request.yaml)
 
   - Triggers when a PR is opened, updated, or reopened.
   - Runs `xmake reports` inside a Docker container based on the image in
@@ -1334,25 +1334,25 @@ Example:
 
 ### Post-merge actions
 
-- [`post-merge.yml`](.github/workflows/post-merge.yml)
+- [`post-merge.yaml`](.github/workflows/post-merge.yaml)
 
   - Triggers when there is a `push` action to the `main` branch.
-  - Runs workflows in `cmake-check-builds.yml` and `xmake-check-builds.yml`.
+  - Runs workflows in `cmake-check-builds.yaml` and `xmake-check-builds.yaml`.
     If they both succeed, the `stable` tag will be updated to point to the
     tip of the `main` branch. Otherwise, a new issue will be created.
   - *If you do not use both CMake and Xmake, you should edit this file.*
 
-- [`cmake-check-builds.yml`](.github/workflows/cmake-check-builds.yml)
+- [`cmake-check-builds.yaml`](.github/workflows/cmake-check-builds.yaml)
 
-  - Triggers only when explicitly called by `post-merge.yml`.
+  - Triggers only when explicitly called by `post-merge.yaml`.
   - Runs `just check-builds` inside Docker containers based on the images in
     [`Dockerfile.alpine`](ci/Dockerfile.alpine) and
     [`Dockerfile.ubuntu`](ci/Dockerfile.ubuntu).
   - *Remove this file if you are not using CMake.*
 
-- [`xmake-check-builds.yml`](.github/workflows/xmake-check-builds.yml)
+- [`xmake-check-builds.yaml`](.github/workflows/xmake-check-builds.yaml)
 
-  - Triggers only when explicitly called by `post-merge.yml`.
+  - Triggers only when explicitly called by `post-merge.yaml`.
   - Runs `xmake check-builds` inside Docker containers based on the images in
     [`Dockerfile.alpine-xmake`](ci/Dockerfile.alpine-xmake) and
     [`Dockerfile.ubuntu-xmake`](ci/Dockerfile.ubuntu-xmake).

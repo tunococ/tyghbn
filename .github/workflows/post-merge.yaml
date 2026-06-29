@@ -12,12 +12,12 @@ jobs:
   # TODO: Remove this block and the related file if you are not using CMake.
   # Also, remove `cmake-check-builds` from the two `needs` lines below.
   cmake-check-builds:
-    uses: ./.github/workflows/cmake-check-builds.yml
+    uses: ./.github/workflows/cmake-check-builds.yaml
 
   # TODO: Remove this block and the related file if you are not using Xmake.
   # Also, remove `xmake-check-builds` from the two `needs` lines below.
   xmake-check-builds:
-    uses: ./.github/workflows/xmake-check-builds.yml
+    uses: ./.github/workflows/xmake-check-builds.yaml
 
   tag-stable:
     # TODO: Remove the job for the build system that you don't want to use.
