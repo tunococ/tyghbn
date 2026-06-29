@@ -283,7 +283,7 @@ Penguin Linux (Debian Forky/SID) with the following software:*
 - [Xmake](https://xmake.io/) 3.0.7
 - [Gcovr](https://gcovr.com/) 8.6
 - [Docker](https://www.docker.com/) 29.5.3
-- [Just](https://just.systems/) 1.51.0
+- [Just](https://just.systems/) 1.49.0
 - [Doxygen](https://www.doxygen.nl/) 1.18.0
   - [Graphviz](https://graphviz.org/) 2.43.0
 
@@ -347,7 +347,7 @@ things:
 To support choosing between compiling for C++ modules or not, a variable named
 `TYGHBN_USE_MODULES` in `CMakeLists.txt` can be set during the
 [CMake configure stage](#2-cmake-configure-stage), and it will be passed as a
-macro into C++ code.
+macro named `TYGHBN_USE_MODULES` with value `1` C++ code.
 
 When you call `conan install`, you can specify a Conan option named
 `use_modules`, which will translate to `TYGHBN_USE_MODULES` in CMake.
@@ -661,7 +661,7 @@ be printed to the console.
 ### `just` scripts
 
 `just` commands are provided for convenience.
-To use them, install [just](https://github.com/casey/just) version 1.51.0 or
+To use them, install [just](https://github.com/casey/just) version 1.49.0 or
 newer, then type `just --list` to see available commands.
 Also, make sure that you have Ninja installed as these commands rely on
 Ninja-based profiles.
@@ -977,7 +977,7 @@ To support choosing between compiling for C++ modules or not, a package
 configuration option named `use_modules` is provided in `xmake.lua`.
 It can be set in the
 [XMake configure stage](#1-xmake-configure-stage), and it will be passed as a
-macro named `TYGHBN_USE_MODULES` into C++ code.
+macro named `TYGHBN_USE_MODULES` with value `1` in C++ code.
 
 ### Xmake+Xrepo development workflow
 
