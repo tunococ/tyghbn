@@ -3,38 +3,40 @@ detect:
     conan profile detect --force
 
 # Initialize single-config build for a given build type
-init build_type compiler='gcc' coverage='cov' modules='mod':
+init build_type compiler='gcc' coverage='cov' modules='mod' sanitize='':
     conan install . --build=missing \
         -pr .pr/{{ compiler }} \
         -pr .pr/ninja \
         -pr .pr/{{ build_type }} \
         -o '&:use_modules={{ if modules =~ 'mod' { 'True' } else { 'False' } }}'
     cmake --preset conan-{{ build_type }} \
-        -DTYGHBN_ENABLE_COVERAGE={{ if coverage =~ 'cov' { 'ON' } else { 'OFF' } }}
+        -DTYGHBN_ENABLE_COVERAGE={{ if coverage =~ 'cov' { 'ON' } else { 'OFF' } }} \
+        {{ if sanitize != '' { '-DTYGHBN_SANITIZE=' + sanitize } else { '' } }}
 
 # Initialize single-config build for all build types
-init-single compiler='gcc' coverage='cov' modules='mod':
-    just init debug {{ compiler }} {{ coverage }} {{ modules }}
-    just init release {{ compiler }} {{ coverage }} {{ modules }}
-    just init relwithdebinfo {{ compiler }} {{ coverage }} {{ modules }}
-    just init minsizerel {{ compiler }} {{ coverage }} {{ modules }}
+init-single compiler='gcc' coverage='cov' modules='mod' sanitize='':
+    just init debug {{ compiler }} {{ coverage }} {{ modules }} {{ sanitize }}
+    just init release {{ compiler }} {{ coverage }} {{ modules }} {{ sanitize }}
+    just init relwithdebinfo {{ compiler }} {{ coverage }} {{ modules }} {{ sanitize }}
+    just init minsizerel {{ compiler }} {{ coverage }} {{ modules }} {{ sanitize }}
 
 # Initialize multi-config build for a given build type
-initm build_type compiler='gcc' coverage='cov' modules='mod':
+initm build_type compiler='gcc' coverage='cov' modules='mod' sanitize='':
     conan install . --build=missing \
         -pr .pr/{{ compiler }} \
         -pr .pr/ninja-multi \
         -pr .pr/{{ build_type }} \
         -o '&:use_modules={{ if modules =~ 'mod' { 'True' } else { 'False' } }}'
     cmake --preset conan-default \
-        -DTYGHBN_ENABLE_COVERAGE={{ if coverage =~ 'cov' { 'ON' } else { 'OFF' } }}
+        -DTYGHBN_ENABLE_COVERAGE={{ if coverage =~ 'cov' { 'ON' } else { 'OFF' } }} \
+        {{ if sanitize != '' { '-DTYGHBN_SANITIZE=' + sanitize } else { '' } }}
 
 # Initialize multi-config build for all build types
-init-multi compiler='gcc' coverage='cov' modules='mod':
-    just initm debug {{ compiler }} {{ coverage }} {{ modules }}
-    just initm release {{ compiler }} {{ coverage }} {{ modules }}
-    just initm relwithdebinfo {{ compiler }} {{ coverage }} {{ modules }}
-    just initm minsizerel {{ compiler }} {{ coverage }} {{ modules }}
+init-multi compiler='gcc' coverage='cov' modules='mod' sanitize='':
+    just initm debug {{ compiler }} {{ coverage }} {{ modules }} {{ sanitize }}
+    just initm release {{ compiler }} {{ coverage }} {{ modules }} {{ sanitize }}
+    just initm relwithdebinfo {{ compiler }} {{ coverage }} {{ modules }} {{ sanitize }}
+    just initm minsizerel {{ compiler }} {{ coverage }} {{ modules }} {{ sanitize }}
 
 # Run `init debug`
 id: (init 'debug')
@@ -153,32 +155,31 @@ scr: (show-cov 'release')
 # =======================================================
 
 # Clean --> Build
-fresh-build build_type='debug' compiler='gcc' coverage='cov' modules='mod':
+fresh-build build_type='debug' compiler='gcc' coverage='cov' modules='mod' sanitize='':
     just clean
-    just init {{ build_type }} {{ compiler }} {{ coverage }} {{ modules }}
+    just init {{ build_type }} {{ compiler }} {{ coverage }} {{ modules }} {{ sanitize }}
     just build {{ build_type }}
 
 # Clean --> Test
-fresh-test build_type='debug' compiler='gcc' coverage='cov' modules='mod':
+fresh-test build_type='debug' compiler='gcc' coverage='cov' modules='mod' sanitize='':
     just fresh-build {{ build_type }} {{ compiler }} {{ coverage }} \
-        {{ modules }}
+        {{ modules }} {{ sanitize }}
     just test {{ build_type }}
 
 # Clean --> Coverage report
-fresh-cov build_type='debug' compiler='gcc' modules='mod':
-    just fresh-build {{ build_type }} {{ compiler }} cov {{ modules }}
+fresh-cov build_type='debug' compiler='gcc' modules='mod' sanitize='':
+    just fresh-build {{ build_type }} {{ compiler }} cov {{ modules }} {{ sanitize }}
     just build-cov {{ build_type }}
 
 # Try building code and running tests for different configurations.
-check-builds:
-    just fresh-test debug gcc cov mod
-    just fresh-test debug gcc cov -
-    just fresh-test debug clang cov mod
-    just fresh-test debug clang cov -
+check-builds sanitize='address,undefined':
+    just fresh-test debug gcc cov mod {{ sanitize }}
+    just fresh-test debug gcc cov - {{ sanitize }}
+    just fresh-test debug clang cov mod {{ sanitize }}
+    just fresh-test debug clang cov - {{ sanitize }}
 
 # Make a test report and a coverage report in debug.
-make-reports compiler='gcc' modules='mod':
+make-reports compiler='gcc' modules='mod' sanitize='address,undefined':
     just clean
-    just init debug {{ compiler }} cov {{ modules }}
+    just init debug {{ compiler }} cov {{ modules }} {{ sanitize }}
     just bd td bcd
-

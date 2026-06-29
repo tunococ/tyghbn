@@ -552,6 +552,51 @@ directory `build/<BuildType>/coverage_report/` in 4 formats:
 - `cobertura.xml`: Cobertura XML
 - `index.html`: HTML page
 
+### Sanitizers
+
+Sanitizers such as AddressSanitizer (ASan) and UndefinedBehaviorSanitizer (UBSan)
+can be enabled during testing by defining the CMake variable `TYGHBN_SANITIZE`
+during the [CMake configure stage](#2-cmake-configure-stage).
+
+For example:
+
+- ```bash
+  cmake --preset conan-debug -DTYGHBN_SANITIZE=address,undefined
+  ```
+
+This configures the project to compile tests with `-fsanitize=address,undefined`.
+The value of `TYGHBN_SANITIZE` is passed directly to the compiler's
+`-fsanitize` flag, so you can specify any sanitizer supported by your compiler.
+
+With GCC and Clang, common values include:
+
+- `address`: AddressSanitizer (ASan)
+- `undefined`: UndefinedBehaviorSanitizer (UBSan)
+- `address,undefined`: ASan + UBSan
+- `thread`: ThreadSanitizer (TSan)
+
+#### Example: Configure step for sanitizers
+
+- Single-config generator
+
+  ```bash
+  cmake --preset conan-debug -DTYGHBN_SANITIZE=address,undefined
+  ```
+
+  prepares the `Debug` build with ASan and UBSan enabled.
+
+- Multi-config generator
+
+  ```bash
+  cmake --preset conan-default -DTYGHBN_SANITIZE=address,undefined
+  ```
+
+  prepares all build types with ASan and UBSan enabled.
+
+After configuring, run tests normally with `ctest` or `just test`.
+The sanitized test binary will be executed, and any sanitizer diagnostics will
+be printed to the console.
+
 ### Troubleshooting
 
 - In order to use Clang with C++ modules, you will need `clang-scan-deps` to
@@ -581,7 +626,7 @@ Below is a summary of `just` commands available in [`justfile`](justfile):
   [`CMakeUserPresets.json`](CMakeUserPresets.json).
 
 - ```bash
-  just init [<build_type> [<compiler> [{cov | -} [{mod | -}]]]]
+  just init [<build_type> [<compiler> [<coverage> [<modules> [<sanitize>]]]]]
   ```
 
   Does [step 1](#1-conan-install-stage) and [step 2](#2-cmake-configure-stage)
@@ -590,54 +635,63 @@ Below is a summary of `just` commands available in [`justfile`](justfile):
   as the generator.
   Note that `<build_type>` is in lowercase.
 
-  If the second last argument contains `cov` as a substring, the code coverage
-  report generation will be enabled. (If absent, it defaults to `cov`.)
-  If the last argument contains `mod` as a substring, the code will be compiled
-  for C++ modules. (If absent, it defaults to `mod`.)
+  If the third argument from the end contains `cov` as a substring, the code
+  coverage report generation will be enabled. (If absent, it defaults to
+  `cov`.)
+  If the second last argument contains `mod` as a substring, the code will be
+  compiled for C++ modules. (If absent, it defaults to `mod`.)
+  If the last argument is a non-empty string, it is passed as
+  `-DTYGHBN_SANITIZE=<sanitize>` to the CMake configure command. This enables
+  sanitizers during testing..
 
   Examples:
 
   - ```bash
-    just init debug clang -
+    just init debug clang with-coverage -
     ```
 
-    Prepares for the debug build, using Clang as the compiler, without the
-    `coverage` CMake target. The library will be built as a C++ module.
-  
-  - ```bash
-    just init release gcc with-coverage -
-    ```
-
-    Prepares for the release build, using GCC as the compiler, with the
+    Prepares for the debug build, using Clang as the compiler, with the
     `coverage` CMake target. The library will be built for classic header
     `#include`.
+  
+  - ```bash
+    just init debug gcc cov mod address,undefined
+    ```
+
+    Prepares for the debug build, using GCC as the compiler, with the
+    `coverage` CMake target. The library will be built as a C++ module.
+    AddressSanitizer and UndefinedBehaviorSanitizer will be enabled during
+    tests.
 
 - ```bash
-  just init-single [<compiler> [cov | -]]
+  just init-single [<compiler> [<coverage> [<sanitize>]]]
   ```
 
-  Initializes all build types for the given compiler and coverage option.
+  Initializes all build types for the given compiler, coverage option, and
+  optional sanitizer.
   This simply calls `just init` 4 times, once for each build type.
 
 - ```bash
-  just init-multi [<compiler> [cov | -]]
+  just init-multi [<compiler> [<coverage> [<sanitize>]]]
   ```
 
   Does [step 1](#1-conan-install-stage) and [step 2](#2-cmake-configure-stage)
   with a given compiler (default to `gcc`) and Ninja multi-config as the
   generator.
-  If the last argument contains `cov` as a substring, the code coverage report
-  generation will be enabled. If the last argument is not specified, it will
-  default to `cov`.
+  If the second last argument contains `cov` as a substring, the code coverage
+  report generation will be enabled. If the last argument is a non-empty
+  string, it is passed as `-DTYGHBN_SANITIZE=<sanitize>` to the CMake configure
+  command.
 
   Examples:
 
   - ```bash
-    just init-multi clang -
+    just init-multi clang - with-coverage - address
     ```
 
     Uses Clang as the compiler and Ninja multi-config as the generator.
     Code coverage report generation will be disabled.
+    The AddressSanitizer will be enabled.
   
   - ```bash
     just init-multi
@@ -749,38 +803,41 @@ a command that is listed more than once, so
 #### Composite `just` commands
 
 - ```bash
-  just fresh-build [<build_type> [<compiler> [<coverage> [<modules>]]]]
+  just fresh-build [<build_type> [<compiler> [<coverage> [<modules> [<sanitize>]]]]]
   ```
 
   Cleans the [build](build) directory, initializes the build system with the
-  given options (with `just init <build_type> <compiler> <coverage> <modules>`
+  given options (with `just init <build_type> <compiler> <coverage> <modules> <sanitize>`
   ), then builds the code (with `just build <build_type>`).
 
 - ```bash
-  just fresh-test [<build_type> [<compiler> [<coverage> [<modules>]]]]
+  just fresh-test [<build_type> [<compiler> [<coverage> [<modules> [<sanitize>]]]]]
   ```
 
   Does `just fresh-build`, followed by `just test <build_type>`.
 
 - ```bash
-  just fresh-cov [<build_type> [<compiler> [<modules>]]]
+  just fresh-cov [<build_type> [<compiler> [<modules> [<sanitize>]]]]
   ```
 
   Does `just fresh-build` with `coverage=cov`, followed by
   `just build-cov <build_type>`.
 
 - ```bash
-  just check-builds
+  just check-builds [<sanitize>]
   ```
 
-  Cleans, builds, and runs tests for the debug build for the 4 combinations:
+  Calls `just fresh-test` for the debug build for the following 4
+  configurations:
   - GCC with C++ modules
   - GCC with headers
   - Clang with C++ modules
   - Clang with headers
 
+  If `<sanitize>` is not provided, it defaults to `address,undefined`.
+
 - ```bash
-  just make-reports [<compiler> [<modules>]]
+  just make-reports [<compiler> [<modules> [<sanitize>]]]
   ```
 
   Cleans, builds, runs tests to generate a test report and a coverage report.
@@ -789,6 +846,8 @@ a command that is listed more than once, so
   [`build/Debug/test-report.txt`](build/Debug/test-report.txt).
   The coverage report is stored in
   [`build/Debug/coverage_report`](build/Debug/coverage_report).
+
+  If `<sanitize>` is not provided, it defaults to `address,undefined`.
 
 ## Using Xmake + Xrepo
 
@@ -896,6 +955,23 @@ Common options and their corresponding arguments are:
   - `gcc`
   - `clang`
 
+- Policies: `--policies=<policies>`
+
+  Xmake supports many types of build-in
+  [policies](https://xmake.io/api/description/builtin-policies.html).
+  Here are the two common policies related to sanitizers:
+
+  - `build.sanitizer.address`: enables AddressSanitizer (ASan).
+  - `build.sanitizer.undefined`: enables UndefinedBehaviorSanitizer (UBSan).
+
+  It is recommended to enable these sanitizers during development.
+  (They are not enabled by default.)
+
+  **Note: There is a bug in Xmake causing the compilation to fail when
+  `build.sanitizer.undefined` is enabled, GCC 15 is used, and `use_modules` is
+  `true`. If you are using a newer version of Xmake or a newer version of GCC,
+  you should try to see if `build.sanitizer.undefined` can be enabled.**
+
 - Project config `use_modules`: `--use_modules={y|n}`
 
   Possible values:
@@ -907,9 +983,9 @@ Common options and their corresponding arguments are:
 
   Possible values:
 
-  - `y`: binary code will be compiled to be position independent.
+  - `y`: the compiled binary code will be position-independent code (PIC).
     This is the default option.
-  - `n`: binary code will not be compiled to be position independent.
+  - `n`: the compiled binary code will not be position-independent.
 
   *Note: It is generally ok to only support position independent compilation.*
 
@@ -923,11 +999,13 @@ Common options and their corresponding arguments are:
   release mode, and support C++ modules.
 
 - ```bash
-  xmake config --toolchain=clang --mode=debug --use_modules=n
+  xmake config --toolchain=clang --mode=debug --use_modules=n \
+    --policies=build.sanitizer.address,build.sanitizer.undefined
   ```
 
-  Configures Xmake to use Clang as the compiler, build in the debug mode,
-  and omit support for C++ modules.
+  Configures Xmake to use Clang as the compiler, build in the debug mode with
+  AddressSanitizer and UndefinedBehaviorSanitizer available, and omit support
+  for C++ modules.
 
 #### Managing Xmake configurations
 
@@ -1022,17 +1100,43 @@ section `Task declarations`.
   xmake reports
   ```
 
-  Cleans the project configurations, configure with the `coverage` mode, then
-  create both a test report and a coverage report.
+  Cleans the project configurations, configure with the `coverage` mode and
+  with PIC, ASan and UBSan enabled, then create both a test report and a
+  coverage report.
+
+  **Note: The configuration has `--use_modules=n` because there is a bug in
+  Xmake causing GCC 15 to fail to build if `use_modules=y` and UBSan is
+  enabled. If you happen to use a newer version of XMake or a newer version of
+  GCC, you should try to see if flipping `use_modules` to `y` works.**
 
 - ```bash
   xmake check-builds
   ```
 
-  Builds and runs tests for different configurations.
+  Builds and runs tests for the following combinations of configurations:
 
   - `toolchain=gcc` and `toolchain=clang`
   - `use_modules=y` and `use_modules=n`
+
+  PIC, ASan and UBSan will be enabled.
+
+  **Note: There is a bug in Xmake causing GCC 15 to fail to build if
+  `use_modules=y` and UBSan is enabled. The current code in `xmake.lua` has a
+  workaround to disable `build.sanitizer.undefined` for this specific
+  configuration.
+  If you happen to use a newer version of XMake or a newer version of
+  GCC, you should try to see if `build.sanitizer.undefined` can stay enabled
+  throughout all the configurations.**
+
+### Troubleshooting
+
+- There is a bug in Xmake causing GCC 15 to fail to build if `use_modules=y`
+  and UBSan is enabled. This same configuration works fine with Clang.
+  - Because of this, the tasks `xmake reports` and `xmake check-builds` skip
+    this problematic configuration.
+  - If you happen to use a newer version of XMake or a
+    newer version of GCC, you should try to see if `build.sanitizer.undefined`
+    can be enabled without breaking the build.
 
 ## Docker
 

@@ -205,6 +205,27 @@ if(PROJECT_IS_TOP_LEVEL AND NOT (DEFINED BUILD_TESTING AND NOT BUILD_TESTING))
       )
     endif()
 
+    # Sanitizer configuration
+    if(DEFINED TYGHBN_SANITIZE AND TYGHBN_SANITIZE)
+      if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR
+        CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+        target_compile_options(test_tyghbn
+          PRIVATE
+            -fsanitize=${TYGHBN_SANITIZE}
+            -fno-omit-frame-pointer
+            -Og -g
+            -fno-sanitize-recover=all
+        )
+        target_link_options(test_tyghbn
+          PRIVATE
+            -fsanitize=${TYGHBN_SANITIZE}
+        )
+        message("${SANITIZER_OPTIONS}")
+      else()
+        message(WARNING "Sanitizers are not supported with ${CMAKE_CXX_COMPILER_ID}")
+      endif()
+    endif()
+
     # Add test source files
     add_subdirectory(tests)
 
@@ -274,6 +295,7 @@ if(PROJECT_IS_TOP_LEVEL AND NOT (DEFINED BUILD_TESTING AND NOT BUILD_TESTING))
         message(WARNING "Code coverage is not supported with ${CMAKE_CXX_COMPILER_ID}")
       endif()
     endif()
+
   endif()
 
 else()

@@ -80,7 +80,7 @@ target("tests")
     -- Uses the project root as the working directory
     set_rundir("$(projectdir)")
 
-    add_tests("default")
+    add_tests("default", { realtime_output = true })
 
 -- Task delcarations
 -- =================
@@ -199,7 +199,19 @@ task("reports")
     })
     on_run(function()
         -- Configure with coverage mode
-        os.exec("xmake config --mode=coverage -y")
+        os.execv("xmake", {
+            "config",
+            "--mode=coverage",
+            "--policies=build.sanitizer.address,build.sanitizer.undefined",
+            "--cxflags=-fno-sanitize-recover=all",
+            "--use_modules=n",
+            "-y",
+        })
+        -- Note: We set use_modules=n here as a workaround for a bug in Xmake
+        -- as build.sanitizer.undefined does not work with GCC 15 when
+        -- use_modules=y, but this same configuration works fine with CMake.
+        -- If you use a newer version of GCC or a newer version Xmake, you
+        -- should try to change use_modules=y and see if it works or not.
 
         try
         {
@@ -240,11 +252,25 @@ task("check-builds")
 
             print("Checking build: %s", label)
 
+            -- Note: We disable build.sanitizer.undefined as a workaround as
+            -- it does not work with GCC 15 when use_modules=y. However, this
+            -- same configuration works fine with CMake, so this is likely a
+            -- bug in Xmake. If you use a newer version of GCC or a newer
+            -- version Xmake, you should try to enable
+            -- build.sanitizer.undefined for all configurations.
+            local policies = "build.sanitizer.address"
+            if configuration.use_modules ~= "y" or
+                configuration.toolchain ~= "gcc" then
+                policies = policies .. ",build.sanitizer.undefined"
+            end
+
             os.execv("xmake", {
-                "f",
+                "config",
                 "--mode=coverage",
                 "--toolchain=" .. configuration.toolchain,
                 "--use_modules=" .. configuration.use_modules,
+                "--policies=" .. policies,
+                "--cxflags=-fno-sanitize-recover=all",
                 "-y",
             })
 
