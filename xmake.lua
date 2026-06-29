@@ -86,7 +86,6 @@ target("tests")
 -- Task delcarations
 -- =================
 
-
 task("test-report")
     set_menu({
         usage = "xmake test-report",
