@@ -131,7 +131,7 @@ This name was chosen to be easy to type and unique enough to find and replace.
 There are 3 variants of this name that occur in files in this repository:
 
 - `Tyghbn`: Used in [`conanfile.py`](conanfile.py) as a Python class name and
-  in Doxygen comment for the ([main page](include/tyghbn/tyghbn.hpp)).
+  in Doxygen comment for the [main page](include/tyghbn/tyghbn.hpp).
 - `TYGHBN`: Used in variable names in scripts and C++ macros.
 - `tyghbn`: Used in C++ code as a namespace name, module names, and header file
   names.
@@ -146,7 +146,7 @@ The example code consists of 3 libraries:
 
 - `or_else`: a binary-less (header-only) library.
 - `add_one`: a normal library.
-- `tyghbn`: an umbrella library that reexports `or_else` and `add_one`.
+- `tyghbn`: an umbrella library that re-exports `or_else` and `add_one`.
 
 The files for these libraries live in 3 subdirectories:
 
@@ -403,7 +403,7 @@ conan install . --build=missing [...args]
 
   - You will actually need to override the C++ standard version in your
     default profile because our code needs C++20, but `conan profile detect`
-     usually creates a profile with an older C++ standard.
+    usually creates a profile with an older C++ standard.
 
   - This repository provides the following Conan profiles for compiler choices:
     - [`.pr/gcc`](.pr/gcc): The GCC version is also fixed to >= 15.
@@ -593,8 +593,9 @@ target, i.e., passing `--target coverage` to the `cmake --build` command in
   runs tests in the `Debug` mode and generates a coverage report.
 
 If this runs successfully, the coverage report will be generated in the
-directory `build/<BuildType>/coverage_report/` in 4 formats:
+directory `build/<BuildType>/coverage_report/` in 5 formats:
 
+- `report.txt`: Plaintext detailed report
 - `summary.txt`: Plaintext summary
 - `summary.md`: Markdown summary
 - `cobertura.xml`: Cobertura XML
@@ -683,7 +684,7 @@ Below is a summary of `just` commands available in [`justfile`](justfile):
   compiled for C++ modules. (If absent, it defaults to `mod`.)
   If the last argument is a non-empty string, it is passed as
   `-DTYGHBN_SANITIZE=<sanitize>` to the CMake configure command. This enables
-  sanitizers during testing..
+  sanitizers during testing.
 
   Examples:
 
@@ -1122,8 +1123,10 @@ You can also run *tasks* that do more than just running tests:
 
   The report will be stored in the directory
   [`build/coverage_report`](build/coverage_report).
-  There are 4 formats of the report in this directory:
+  There are 5 formats of the report in this directory:
 
+  - [`build/coverage_report/report.txt`](build/coverage_report/report.txt):
+    plaintext detailed report
   - [`build/coverage_report/cobertura.xml`](build/coverage_report/cobertura.xml):
     Cobertura XML
   - [`build/coverage_report/index.html`](build/coverage_report/index.html):
@@ -1152,7 +1155,7 @@ section `Task declarations`.
 
   **Note: The configuration has `--use_modules=n` because there is a bug in
   Xmake causing GCC 15 to fail to build if `use_modules=y` and UBSan is
-  enabled. If you happen to use a newer version of XMake or a newer version of
+  enabled. If you happen to use a newer version of Xmake or a newer version of
   GCC, you should try to see if flipping `use_modules` to `y` works.**
 
 - ```bash
