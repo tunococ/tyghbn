@@ -97,7 +97,7 @@ target("tests")
 
     add_tests("default", { realtime_output = true })
 
-target("benchmark")
+target("benchmarks")
     set_kind("binary")
     add_packages("nanobench")
     add_files(
