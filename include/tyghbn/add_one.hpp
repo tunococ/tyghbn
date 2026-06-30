@@ -19,7 +19,7 @@ namespace tyghbn {
  */
 template <typename T>
 T add_one(T x) {
-    return x + T(1);
+  return x + T(1);
 }
 
 /// @cond

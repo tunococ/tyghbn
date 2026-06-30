@@ -10,24 +10,38 @@ import tyghbn;
 #include <tyghbn/or_else.hpp>
 #endif
 
+using namespace ankerl::nanobench;
+
 int main() {
-    ankerl::nanobench::Bench bench;
+  Bench bench;
 
-    bench.run("add_one<int>", [] {
-        volatile auto r = tyghbn::add_one(42);
-    });
+  bench.run("add_one<int>", [] {
+    auto x = 42;
+    doNotOptimizeAway(x);
+    doNotOptimizeAway(tyghbn::add_one(x));
+  });
 
-    bench.run("add_one<double>", [] {
-        volatile auto r = tyghbn::add_one(3.14);
-    });
+  bench.run("add_one<double>", [] {
+    auto x = 3.14;
+    doNotOptimizeAway(x);
+    doNotOptimizeAway(tyghbn::add_one(x));
+  });
 
-    bench.run("or_else<int>", [] {
-        volatile auto r = tyghbn::or_else(2, 1);
-    });
+  bench.run("or_else<int>", [] {
+    auto x = 2;
+    auto y = 1;
+    doNotOptimizeAway(x);
+    doNotOptimizeAway(y);
+    doNotOptimizeAway(tyghbn::or_else(x, y));
+  });
 
-    bench.run("or_else<int> with zero", [] {
-        volatile auto r = tyghbn::or_else(0, 1);
-    });
+  bench.run("or_else<int> with zero", [] {
+    auto x = 0;
+    auto y = 1;
+    doNotOptimizeAway(x);
+    doNotOptimizeAway(y);
+    doNotOptimizeAway(tyghbn::or_else(x, y));
+  });
 
-    return 0;
+  return 0;
 }

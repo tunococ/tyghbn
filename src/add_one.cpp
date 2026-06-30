@@ -4,7 +4,7 @@ namespace tyghbn {
 
 template <>
 std::string add_one(std::string x) {
-    return x + "1";
+  return x + "1";
 }
 
 } // namespace tyghbn
