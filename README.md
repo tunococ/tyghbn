@@ -26,6 +26,9 @@ with the following features:
 - Test code that integrates with [doctest](https://github.com/doctest/doctest)
   is provided.
 
+- Benchmark code that integrates with
+  [nanobench](https://nanobench.ankerl.com/) is provided.
+
 - Shorthand scripts for common tasks are provided via
   [`just`](https://just.systems/) (and `xmake`).
 
@@ -189,6 +192,16 @@ The test library used here is [doctest](https://github.com/doctest/doctest).
 You can change the test library by modifying the dependency in
 [`conanfile.py`](conanfile.py), [`CMakeLists.txt`](CMakeLists.txt), and/or
 [`xmake.lua`](xmake.lua), as well as fixing doctest-specific code.
+
+#### Benchmark code
+
+Benchmark code lives in [`benchmarks`](benchmarks).
+The benchmark library used here is
+[nanobench](https://nanobench.ankerl.com/).
+
+You can change the benchmark library by modifying the dependency in
+[`conanfile.py`](conanfile.py), [`CMakeLists.txt`](CMakeLists.txt), and/or
+[`xmake.lua`](xmake.lua), as well as fixing nanobench-specific code.
 
 ## Environment setup
 
@@ -782,6 +795,13 @@ Below is a summary of `just` commands available in [`justfile`](justfile):
   Note that the code must have been built before running tests.
 
 - ```bash
+  just benchmark [<build_type>] [...args]
+  ```
+
+  Runs the benchmark executable for the given build type.
+  Defaults to `release`.
+
+- ```bash
   just build-cov <build_type>
   ```
 
@@ -823,15 +843,19 @@ There are also `just` shortcuts that assume some default arguments:
 - `just td` ⇒ `just test debug`.
 - `just tr` ⇒ `just test release`.
 - `just ta` ⇒ `just td; just tr`.
+- `just bmd` ⇒ `just benchmark debug`.
+- `just bmr` ⇒ `just benchmark release`.
+- `just bmrd` ⇒ `just benchmark relwithdebinfo`.
+- `just bmm` ⇒ `just benchmark minsizerel`.
 - `just bcd` ⇒ `just build-cov debug`.
 - `just bcr` ⇒ `just build-cov release`.
 - `just bca` ⇒ `just bcd; just bcr`.
 - `just scd` ⇒ `just show-cov debug`.
 - `just scr` ⇒ `just show-cov release`.
 
-These shortcuts support only `Debug` and `Release` build types.
-If you want to use `MinSizeRel` or `RelWithDebInfo`, you will have to type the
-full commands.
+These shortcuts support only `Debug` and `Release` build types,
+except for the benchmark shortcuts (`bmd`, `bmr`, `bmrd`, `bmm`)
+which support all build types.
 
 #### One-line command
 
@@ -1118,6 +1142,15 @@ xmake run tests
 ```
 
 This will run the `tests` executable target defined in
+[`xmake.lua`](xmake.lua).
+
+To run benchmarks with Xmake, execute
+
+```bash
+xmake run benchmarks
+```
+
+This will run the `benchmarks` executable target defined in
 [`xmake.lua`](xmake.lua).
 
 ### Composite Xmake tasks

@@ -21,6 +21,7 @@ option("use_modules")
     set_default(true)
     set_showmenu(true)
     set_description("Enable C++20 module support")
+option_end()
 
 option("pic")
     set_default(true)
@@ -32,15 +33,29 @@ if has_config("pic") then
     add_cxflags("-fPIC")
 end
 
+option("has_linux_version_h")
+    add_cincludes("linux/version.h")
+option_end()
+
 -- Dependency declarations
 -- =======================
 
 -- Test library: doctest
 -- We need to set `cmake = false` to avoid invoking CMake when it's actually
 -- not needed. doctest can work without CMake.
-add_requires("doctest", {configs = {cmake = false}})
+add_requires("doctest >=2.5.2 <3.0.0", {configs = {cmake = false}})
 
--- Target delcarations
+-- Benchmark library: nanobench
+add_requires("nanobench >=4.3.11 <5.0.0", {
+    configs = {
+        cxflags =
+            not has_config("has_linux_version_h") and
+            "-DANKERL_NANOBENCH_DISABLE_PERF_COUNTERS=1" or
+            nil
+    }
+})
+
+-- Target declarations
 -- ===================
 
 target("or_else")
@@ -94,7 +109,21 @@ target("tests")
 
     add_tests("default", { realtime_output = true })
 
--- Task delcarations
+target("benchmarks")
+    set_kind("binary")
+    add_packages("nanobench")
+    add_files(
+        "benchmarks/benchmark_main.cpp"
+    )
+    add_deps("tyghbn")
+    if has_config("use_modules") then
+        add_defines("TYGHBN_USE_MODULES=1")
+    end
+    if is_plat("linux") and not has_config("has_linux_version_h") then
+        add_defines("ANKERL_NANOBENCH_DISABLE_PERF_COUNTERS=1")
+    end
+
+-- Task declarations
 -- =================
 
 task("test-report")

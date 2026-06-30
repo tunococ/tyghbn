@@ -102,6 +102,32 @@ tr: (test 'release')
 
 ta: td tr
 
+# Run benchmarks
+benchmark build_type='release' *args:
+    ./build/{{ \
+            if lowercase(build_type) =~ 'rel' { \
+                if lowercase(build_type) =~ 'deb' { \
+                    'RelWithDebInfo' \
+                } else { \
+                    if lowercase(build_type) =~ 'min' { \
+                        'MinSizeRel' \
+                    } else { \
+                        'Release' \
+                    } \
+                }
+            } else {
+                'Debug'
+            } \
+        }}/benchmark_tyghbn {{ args }}
+
+bmd: (benchmark 'debug')
+
+bmr: (benchmark 'release')
+
+bmrd: (benchmark 'relwithdebinfo')
+
+bmm: (benchmark 'minsizerel')
+
 # Run tests and generate a coverage report
 build-cov build_type *args:
     just build {{ build_type }} --target coverage {{ args }}
