@@ -21,6 +21,7 @@ option("use_modules")
     set_default(true)
     set_showmenu(true)
     set_description("Enable C++20 module support")
+option_end()
 
 option("pic")
     set_default(true)
@@ -32,6 +33,10 @@ if has_config("pic") then
     add_cxflags("-fPIC")
 end
 
+option("has_linux_version_h")
+    add_cincludes("linux/version.h")
+option_end()
+
 -- Dependency declarations
 -- =======================
 
@@ -41,7 +46,14 @@ end
 add_requires("doctest >=2.5.2 <3.0.0", {configs = {cmake = false}})
 
 -- Benchmark library: nanobench
-add_requires("nanobench >=4.3.11 <5.0.0")
+add_requires("nanobench >=4.3.11 <5.0.0", {
+    configs = {
+        cxflags =
+            not has_config("has_linux_version_h") and
+            "-DANKERL_NANOBENCH_DISABLE_PERF_COUNTERS=1" or
+            nil
+    }
+})
 
 -- Target declarations
 -- ===================
@@ -106,6 +118,9 @@ target("benchmarks")
     add_deps("tyghbn")
     if has_config("use_modules") then
         add_defines("TYGHBN_USE_MODULES=1")
+    end
+    if is_plat("linux") and not has_config("has_linux_version_h") then
+        add_defines("ANKERL_NANOBENCH_DISABLE_PERF_COUNTERS=1")
     end
 
 -- Task declarations

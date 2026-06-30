@@ -299,7 +299,7 @@ if(PROJECT_IS_TOP_LEVEL AND NOT (DEFINED BUILD_TESTING AND NOT BUILD_TESTING))
 
   endif()
 
-  # Benchmark executable
+  ### TEMPLATE_BLOCK: Benchmarks
   find_package(nanobench CONFIG QUIET)
 
   if(NOT nanobench_FOUND)
@@ -314,6 +314,24 @@ if(PROJECT_IS_TOP_LEVEL AND NOT (DEFINED BUILD_TESTING AND NOT BUILD_TESTING))
       )
     endif()
 
+    # nanobench relies on platform-specific functionality to provide more
+    # details. If the dev library is not present on the system, we fall back
+    # to a more generic level of details.
+    if(LINUX)
+      include(CheckIncludeFiles)
+      check_include_files("linux/version.h" HAS_LINUX_VERSION_H)
+      if(NOT HAS_LINUX_VERSION_H)
+        target_compile_definitions(benchmark_tyghbn
+          PRIVATE
+            ANKERL_NANOBENCH_DISABLE_PERF_COUNTERS=1
+        )
+        message(WARNING
+          "linux/perf_event.h or linux/version.h not found. "
+          "Performance counters will be disabled."
+        )
+      endif()
+    endif()
+
     target_sources(benchmark_tyghbn
       PRIVATE
         benchmarks/benchmark_main.cpp
@@ -325,6 +343,7 @@ if(PROJECT_IS_TOP_LEVEL AND NOT (DEFINED BUILD_TESTING AND NOT BUILD_TESTING))
         nanobench::nanobench
     )
   endif()
+  ### TEMPLATE_BLOCK_END: Benchmarks
 
 else()
   message(WARNING "Not building tests")
