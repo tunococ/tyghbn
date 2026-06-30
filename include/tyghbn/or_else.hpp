@@ -18,7 +18,7 @@ namespace tyghbn {
  */
 template <typename T>
 T or_else(T x, T y) {
-    return x == T(0) ? y : x;
+  return x == T(0) ? y : x;
 }
 
 } // namespace tyghbn
