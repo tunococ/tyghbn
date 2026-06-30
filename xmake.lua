@@ -38,9 +38,12 @@ end
 -- Test library: doctest
 -- We need to set `cmake = false` to avoid invoking CMake when it's actually
 -- not needed. doctest can work without CMake.
-add_requires("doctest", {configs = {cmake = false}})
+add_requires("doctest >=2.5.2 <3.0.0", {configs = {cmake = false}})
 
--- Target delcarations
+-- Benchmark library: nanobench
+add_requires("nanobench >=4.3.11 <5.0.0")
+
+-- Target declarations
 -- ===================
 
 target("or_else")
@@ -94,7 +97,18 @@ target("tests")
 
     add_tests("default", { realtime_output = true })
 
--- Task delcarations
+target("benchmark")
+    set_kind("binary")
+    add_packages("nanobench")
+    add_files(
+        "benchmarks/benchmark_main.cpp"
+    )
+    add_deps("tyghbn")
+    if has_config("use_modules") then
+        add_defines("TYGHBN_USE_MODULES=1")
+    end
+
+-- Task declarations
 -- =================
 
 task("test-report")

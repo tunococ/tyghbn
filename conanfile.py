@@ -36,6 +36,7 @@ class Tyghbn(ConanFile):
         skip_tests = self.conf.get("tools.build:skip_test", default=False, check_type=bool)
         if not skip_tests:
             self.test_requires("doctest/[>=2.5.2 <3.0.0]")
+            self.test_requires("nanobench/[>=4.3.11 <5.0.0]")
 
     def validate(self):
         check_min_cppstd(self, "20")

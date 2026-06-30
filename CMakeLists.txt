@@ -299,6 +299,33 @@ if(PROJECT_IS_TOP_LEVEL AND NOT (DEFINED BUILD_TESTING AND NOT BUILD_TESTING))
 
   endif()
 
+  # Benchmark executable
+  find_package(nanobench CONFIG QUIET)
+
+  if(NOT nanobench_FOUND)
+    message(WARNING "nanobench not found - benchmarks will not be built")
+  else()
+    add_executable(benchmark_tyghbn)
+
+    if(TYGHBN_USE_MODULES)
+      target_compile_definitions(benchmark_tyghbn
+        PRIVATE
+          TYGHBN_USE_MODULES=1
+      )
+    endif()
+
+    target_sources(benchmark_tyghbn
+      PRIVATE
+        benchmarks/benchmark_main.cpp
+    )
+
+    target_link_libraries(benchmark_tyghbn
+      PRIVATE
+        tyghbn
+        nanobench::nanobench
+    )
+  endif()
+
 else()
   message(WARNING "Not building tests")
   message(WARNING "BUILD_TESTING is ${BUILD_TESTING}")
