@@ -237,6 +237,23 @@ The set of required applications varies based on your configuration choices.
     - Note: The necessity of `clang-scan-deps` might be dropped in some future
       versions of Clang.
 
+- **For ASan and UBSan**
+  - Depending on your operating systems, you may need to install packages for
+    ASan and UBSan.
+  - GCC and Clang need different libraries for ASan and UBSan.
+    - GCC needs `libasan` and `libubsan`.
+    - Clang needs `compiler-rt`.
+  - For CMake+Conan, `just check-builds` and `just make-reports` set the
+    default sanitizer option to include both ASan and UBSan
+    (with value `address,undefined`).
+    You can modify [`cmake.just`](cmake.just) to remove these sanitizers if you
+    don't need them.
+  - For Xmake+Xrepo, `xmake check-builds` and `xmake reports` set the sanitizer
+    option to include both ASan and UBSan
+    (with `--policies=build.sanitizer.address,build.sanitizer.undefined`).
+    You can modify [`xmake.lua`](xmake.lua) to remove these sanitizers if you
+    don't need them.
+
 - **For coverage information**
   - GCC needs `gcov` to produce coverage information. `gcov` is usually
     included with `gcc`, so when you install GCC, you should already have
