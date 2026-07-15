@@ -45,11 +45,14 @@ if(PROJECT_IS_TOP_LEVEL)
 
   if(NOT (DEFINED BUILD_TESTING AND NOT BUILD_TESTING))
     option(TYGHBN_ENABLE_COVERAGE "Enable code coverage instrumentation" OFF)
-    if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-      add_compile_options(--coverage -g)
-      add_link_options(--coverage)
+    if(TYGHBN_ENABLE_COVERAGE)
+      if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+        add_compile_options(--coverage -g)
+        add_link_options(--coverage)
+      endif()
     endif()
   endif()
+
 endif()
 
 ### TEMPLATE_BLOCK: Library with no cpp files
@@ -218,18 +221,15 @@ if(PROJECT_IS_TOP_LEVEL AND NOT (DEFINED BUILD_TESTING AND NOT BUILD_TESTING))
     if(DEFINED TYGHBN_SANITIZE AND TYGHBN_SANITIZE)
       if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR
         CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-        target_compile_options(test_tyghbn
-          PRIVATE
-            -fsanitize=${TYGHBN_SANITIZE}
-            -fno-omit-frame-pointer
-            -Og -g
-            -fno-sanitize-recover=all
+        add_compile_options(
+          -fsanitize=${TYGHBN_SANITIZE}
+          -fno-omit-frame-pointer
+          -Og -g
+          -fno-sanitize-recover=all
         )
-        target_link_options(test_tyghbn
-          PRIVATE
-            -fsanitize=${TYGHBN_SANITIZE}
+        add_link_options(
+          -fsanitize=${TYGHBN_SANITIZE}
         )
-        message("${SANITIZER_OPTIONS}")
       else()
         message(WARNING "Sanitizers are not supported with ${CMAKE_CXX_COMPILER_ID}")
       endif()
