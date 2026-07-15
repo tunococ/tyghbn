@@ -209,9 +209,10 @@ task("coverage-report")
 
         print("Generating coverage report at: %s", output_file)
         os.execv("gcovr", {
-            "-r", ".",
-            "--exclude", "tests/",
-            "--exclude", "benchmarks/",
+            "--root", ".",
+            "--filter", "src/",
+            "--filter", "include/",
+            "--filter", "modules/",
             "--gcov-executable", gcov_executable,
             "--txt", path.join(output_dir, "report.txt"),
             "--html-details", path.join(output_dir, "index.html"),
