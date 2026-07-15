@@ -42,6 +42,14 @@ if(PROJECT_IS_TOP_LEVEL)
   endif()
 
   message("compile_commands.json path: ${CDB_PATH}")
+
+  if(NOT (DEFINED BUILD_TESTING AND NOT BUILD_TESTING))
+    option(TYGHBN_ENABLE_COVERAGE "Enable code coverage instrumentation" OFF)
+    if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+      add_compile_options(--coverage -g)
+      add_link_options(--coverage)
+    endif()
+  endif()
 endif()
 
 ### TEMPLATE_BLOCK: Library with no cpp files
@@ -244,12 +252,8 @@ if(PROJECT_IS_TOP_LEVEL AND NOT (DEFINED BUILD_TESTING AND NOT BUILD_TESTING))
 
 
     # Code coverage report generation
-    option(TYGHBN_ENABLE_COVERAGE "Enable code coverage instrumentation" OFF)
     if(TYGHBN_ENABLE_COVERAGE)
       if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-        target_compile_options(test_tyghbn PRIVATE --coverage -O0 -g)
-        target_link_options(test_tyghbn PRIVATE --coverage)
-
         find_program(GCOVR gcovr)
 
         if(GCOVR)
@@ -270,7 +274,12 @@ if(PROJECT_IS_TOP_LEVEL AND NOT (DEFINED BUILD_TESTING AND NOT BUILD_TESTING))
             add_custom_target(coverage
               COMMAND $<TARGET_FILE:test_tyghbn>
               COMMAND ${CMAKE_COMMAND} -E make_directory "${TYGHBN_BUILD_DIR}/coverage_report"
-              COMMAND ${GCOVR} --root ${CMAKE_SOURCE_DIR}
+              COMMAND ${GCOVR}
+                --root "."
+                --filter "src/"
+                --filter "include/"
+                --filter "modules/"
+                --gcov-executable "${TYGHBN_GCOV_EXECUTABLE}"
                 --txt
                 "${TYGHBN_BUILD_DIR}/coverage_report/report.txt"
                 --html-details
@@ -279,11 +288,9 @@ if(PROJECT_IS_TOP_LEVEL AND NOT (DEFINED BUILD_TESTING AND NOT BUILD_TESTING))
                 "${TYGHBN_BUILD_DIR}/coverage_report/cobertura.xml"
                 --markdown
                 "${TYGHBN_BUILD_DIR}/coverage_report/summary.md"
-                --exclude "${CMAKE_SOURCE_DIR}/tests/"
-                --gcov-executable "${TYGHBN_GCOV_EXECUTABLE}"
                 --txt-summary >
                 "${TYGHBN_BUILD_DIR}/coverage_report/summary.txt"
-              WORKING_DIRECTORY "${TYGHBN_BUILD_DIR}"
+              WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
               COMMENT "Generating code coverage report in ${TYGHBN_BUILD_DIR}/coverage_report"
             )
           endif()
