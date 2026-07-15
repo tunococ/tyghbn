@@ -211,6 +211,7 @@ task("coverage-report")
         os.execv("gcovr", {
             "-r", ".",
             "--exclude", "tests/",
+            "--exclude", "benchmarks/",
             "--gcov-executable", gcov_executable,
             "--txt", path.join(output_dir, "report.txt"),
             "--html-details", path.join(output_dir, "index.html"),
